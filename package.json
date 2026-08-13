@@ -1,0 +1,14 @@
+{
+  "name": "badmintoncounter-webapp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Live-Punktezähler für Badminton-Matches mit Match-Historie",
+  "scripts": {
+    "start": "node server.js",
+    "gen-icons": "node scripts/gen-icons.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

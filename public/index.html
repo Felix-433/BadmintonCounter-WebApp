@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BadmintonCounter</title>
+<meta name="theme-color" content="#122a4d">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <h1>🏸 BadmintonCounter</h1>
+    <nav class="tabs" id="nav">
+      <button type="button" data-view="setup">Neues Match</button>
+      <button type="button" data-view="history">Verlauf</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-setup" class="view">
+      <form id="setup-form">
+        <label>Spieler/Team A
+          <input id="input-a" name="a" autocomplete="off" required>
+        </label>
+        <label>Spieler/Team B
+          <input id="input-b" name="b" autocomplete="off" required>
+        </label>
+        <fieldset>
+          <legend>Wer schlägt zuerst auf?</legend>
+          <label class="radio"><input type="radio" name="first-server" value="A" checked> A</label>
+          <label class="radio"><input type="radio" name="first-server" value="B"> B</label>
+        </fieldset>
+        <button type="submit" class="primary">Match starten</button>
+      </form>
+    </section>
+
+    <section id="view-live" class="view">
+      <div class="sets-summary" id="sets-summary"></div>
+
+      <div class="court">
+        <button type="button" class="score-btn side-a" id="btn-a">
+          <span class="player-name" id="name-a"></span>
+          <span class="serve-indicator hidden" id="serve-a">🏸 Aufschlag</span>
+          <span class="score" id="score-a">0</span>
+        </button>
+        <button type="button" class="score-btn side-b" id="btn-b">
+          <span class="player-name" id="name-b"></span>
+          <span class="serve-indicator hidden" id="serve-b">🏸 Aufschlag</span>
+          <span class="score" id="score-b">0</span>
+        </button>
+      </div>
+
+      <div class="live-controls">
+        <button type="button" id="btn-undo">↶ Undo</button>
+        <button type="button" id="btn-cancel">Match abbrechen</button>
+      </div>
+
+      <div id="match-over-banner" class="match-over-banner hidden">
+        <p id="match-over-text"></p>
+        <button type="button" class="primary" id="btn-save">Match speichern</button>
+      </div>
+    </section>
+
+    <section id="view-history" class="view">
+      <h2>Verlauf</h2>
+      <p id="history-empty" class="empty hidden">Noch keine gespeicherten Matches.</p>
+      <ul id="history-list"></ul>
+    </section>
+  </main>
+</div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
