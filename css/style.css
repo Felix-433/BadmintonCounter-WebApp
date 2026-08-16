@@ -352,11 +352,33 @@ button.primary {
 }
 
 /* History */
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 #view-history h2 {
   margin: 0;
   font-size: 1.1rem;
   color: var(--text-dim);
   font-weight: 600;
+}
+
+.history-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-actions button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--panel-light);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
 }
 
 .empty {

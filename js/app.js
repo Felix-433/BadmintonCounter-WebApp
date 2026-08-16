@@ -53,6 +53,9 @@ const el = {
   btnSave: document.getElementById('btn-save'),
   historyList: document.getElementById('history-list'),
   historyEmpty: document.getElementById('history-empty'),
+  btnExport: document.getElementById('btn-export'),
+  btnImport: document.getElementById('btn-import'),
+  inputImport: document.getElementById('input-import'),
 };
 
 /** @type {{spielerA:string, spielerB:string, firstServer:'A'|'B', matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[]}|null} */
@@ -253,6 +256,66 @@ function deleteHistoryEntry(id) {
   renderHistory();
 }
 
+// Sichern/Wiederherstellen: der Verlauf lebt nur im localStorage dieses
+// Geräts — vor einer Neuinstallation, einem Browser-Reset o.ä. lässt er
+// sich hier als JSON-Datei exportieren und später wieder importieren.
+async function exportHistory() {
+  const list = loadHistoryList();
+  const payload = { app: 'BadmintonCounter', exportedAt: new Date().toISOString(), matches: list };
+  const json = JSON.stringify(payload, null, 2);
+  const filename = `badmintoncounter-verlauf-${new Date().toISOString().slice(0, 10)}.json`;
+
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([json], filename, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'BadmintonCounter Verlauf' });
+        return;
+      }
+    } catch {
+      // Abgebrochen oder nicht unterstützt — auf normalen Download zurückfallen.
+    }
+  }
+
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importHistoryFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result));
+      const incoming = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.matches) ? parsed.matches : null;
+      if (!incoming) throw new Error('Unbekanntes Dateiformat');
+
+      const existing = loadHistoryList();
+      const existingIds = new Set(existing.map((m) => m.id));
+      let added = 0;
+      for (const m of incoming) {
+        if (m && m.id && !existingIds.has(m.id)) {
+          existing.push(m);
+          existingIds.add(m.id);
+          added++;
+        }
+      }
+      saveHistoryList(existing);
+      renderHistory();
+      alert(`${added} Match(es) importiert (${incoming.length - added} bereits vorhanden, übersprungen).`);
+    } catch (err) {
+      alert(`Import fehlgeschlagen: ${err.message}`);
+    }
+  };
+  reader.readAsText(file);
+}
+
 function updateMatchTypeUI() {
   const matchType = el.setupForm.querySelector('input[name="match-type"]:checked').value;
   const isDoppel = matchType === 'doppel';
@@ -332,6 +395,14 @@ el.nav.addEventListener('click', (e) => {
 el.historyList.addEventListener('click', (e) => {
   const btn = e.target.closest('.delete-btn');
   if (btn) deleteHistoryEntry(btn.dataset.id);
+});
+
+el.btnExport.addEventListener('click', exportHistory);
+el.btnImport.addEventListener('click', () => el.inputImport.click());
+el.inputImport.addEventListener('change', () => {
+  const file = el.inputImport.files[0];
+  if (file) importHistoryFromFile(file);
+  el.inputImport.value = '';
 });
 
 // Vollbildschirm: nützlich beim Live-Scoring, um Browser-Chrome (Adressleiste

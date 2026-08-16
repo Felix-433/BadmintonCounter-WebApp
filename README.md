@@ -41,6 +41,13 @@ Das heißt der Verlauf ist geräte-/browserlokal (kein Sync zwischen mehreren
 Handys) und übersteht einen Seitenreload, geht aber verloren, wenn der
 Browser-Speicher geleert oder die PWA deinstalliert wird.
 
+**Sichern/Wiederherstellen:** Im Verlauf-Tab gibt es **⬆ Sichern**
+(exportiert den kompletten Verlauf als JSON-Datei — auf iOS öffnet das den
+Teilen-Dialog, sonst einen normalen Download) und **⬇ Wiederherstellen**
+(liest so eine JSON-Datei wieder ein). Import ergänzt nur neue Einträge
+(per `id` erkannt) und überschreibt nichts Bestehendes — sinnvoll z.B. vor
+einer Neuinstallation der PWA.
+
 `server.js` inkl. `src/db.js`/`src/api.js` (Node-Server + `data/db.json`)
 existieren weiterhin im Repo, werden von der App aber nicht mehr benutzt —
 sie dienen nur noch der lokalen Entwicklung (`npm start`) und sind für den

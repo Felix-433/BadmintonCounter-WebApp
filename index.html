@@ -102,7 +102,14 @@
     </section>
 
     <section id="view-history" class="view">
-      <h2>Verlauf</h2>
+      <div class="history-header">
+        <h2>Verlauf</h2>
+        <div class="history-actions">
+          <button type="button" id="btn-export">⬆ Sichern</button>
+          <button type="button" id="btn-import">⬇ Wiederherstellen</button>
+          <input type="file" id="input-import" accept="application/json" class="hidden">
+        </div>
+      </div>
       <p id="history-empty" class="empty hidden">Noch keine gespeicherten Matches.</p>
       <ul id="history-list"></ul>
     </section>
