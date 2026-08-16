@@ -1,14 +1,19 @@
 # BadmintonCounter
 
 Live-Punktezähler für Badminton-Matches mit Speicherung der Match-Historie.
+Läuft als installierte PWA komplett eigenständig auf dem Handy — nach der
+einmaligen Installation (siehe [Zugriff vom iPhone](#zugriff-vom-iphone-tailscale)
+unten) wird kein PC/Server mehr gebraucht, siehe [Isolierter Betrieb](#isolierter-betrieb-ohne-pc).
 
-## Start
+## Start (für Entwicklung/Ersteinrichtung)
 
 ```bash
 npm start
 ```
 
-Läuft anschließend unter http://localhost:3200
+Läuft anschließend unter http://localhost:3200. Der Server wird nur für die
+lokale Entwicklung und die einmalige Erstinstallation auf dem Handy
+gebraucht — die App selbst spricht ihn danach nicht mehr an (siehe unten).
 
 ## Regeln
 
@@ -26,11 +31,17 @@ Außerdem wählbar: **Doppel** (Standard, je 2 Spieler:innen pro Team) oder
 
 ## Daten
 
-Beendete Matches (Spielernamen, Satzergebnisse, Gewinner) werden in
-`data/db.json` gespeichert (Ordner wird beim ersten Start automatisch
-angelegt, per `.gitignore` nicht versioniert). Ein laufendes Match wird
-zusätzlich im `localStorage` des Browsers gehalten, damit ein Seitenreload
-den Fortschritt nicht verliert.
+Sowohl das laufende Match als auch der komplette Match-Verlauf (beendete
+Matches: Spielernamen, Satzergebnisse, Gewinner) liegen ausschließlich im
+`localStorage` des Geräts/Browsers — die App ruft dafür nie den Server auf.
+Das heißt der Verlauf ist geräte-/browserlokal (kein Sync zwischen mehreren
+Handys) und übersteht einen Seitenreload, geht aber verloren, wenn der
+Browser-Speicher geleert oder die PWA deinstalliert wird.
+
+`server.js` inkl. `src/db.js`/`src/api.js` (Node-Server + `data/db.json`)
+existieren weiterhin im Repo, werden von der App aber nicht mehr benutzt —
+sie dienen nur noch der lokalen Entwicklung (`npm start`) und sind für den
+normalen Betrieb auf dem iPhone optional.
 
 ## Fernbedienung (Bluetooth-Clicker)
 
@@ -83,3 +94,20 @@ Let's-Encrypt-Zertifikat ausstellt:
    lokalen Server.
 5. Auf dem iPhone (im selben Tailnet) diese `https://…ts.net`-Adresse in
    Safari öffnen und per **Teilen → Zum Home-Bildschirm** installieren.
+
+## Isolierter Betrieb ohne PC
+
+Nach der einmaligen Installation (Schritte oben) braucht die App den
+PC/Server nicht mehr:
+
+- Der Service Worker cached App-Shell (HTML/CSS/JS/Icons) beim ersten
+  Aufruf, danach lädt das Homescreen-Icon komplett offline.
+- Match-Verlauf und laufendes Match liegen im `localStorage` des Geräts,
+  nicht auf dem Server.
+
+Das heißt: PC ausschalten, Tailscale/WLAN aus — die App vom Homescreen-Icon
+aus öffnen funktioniert trotzdem, Punkte zählen und Matches speichern
+inklusive. Einzige Ausnahme: um eine neue Version der App zu bekommen
+(nach einem Update dieses Projekts), muss das Handy nochmal mit
+laufendem Server online sein, damit der Service Worker die neuen Dateien
+nachladen kann.

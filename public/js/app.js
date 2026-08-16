@@ -1,6 +1,26 @@
 import { getSetWinner, getMatchWinner, computeState, REGEL_PRESETS, DEFAULT_MODUS } from './rules.js';
 
 const STORAGE_KEY = 'badmintoncounter:current';
+const HISTORY_KEY = 'badmintoncounter:history';
+
+function generateId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function loadHistoryList() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistoryList(list) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+}
 
 const el = {
   nav: document.getElementById('nav'),
@@ -148,31 +168,29 @@ function cancelMatch() {
   showView('setup');
 }
 
-async function saveMatch() {
+function saveMatch() {
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
   el.btnSave.disabled = true;
   try {
-    const res = await fetch('/api/matches', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        spielerA: match.spielerA,
-        spielerB: match.spielerB,
-        spielart: match.matchType,
-        modus: match.modus,
-        saetze,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `Speichern fehlgeschlagen (${res.status})`);
-    }
+    const eintrag = {
+      id: generateId(),
+      datum: new Date().toISOString(),
+      spielerA: match.spielerA,
+      spielerB: match.spielerB,
+      spielart: match.matchType,
+      modus: match.modus,
+      saetze,
+      gewinner: getMatchWinner(saetze, regeln),
+    };
+    const list = loadHistoryList();
+    list.push(eintrag);
+    saveHistoryList(list);
     match = null;
     persistMatch();
     showView('history');
   } catch (err) {
-    alert(err.message);
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
     el.btnSave.disabled = false;
   }
 }
@@ -193,19 +211,11 @@ function formatModus(modus) {
   return modus === 'bis15' ? 'bis 15' : 'bis 21';
 }
 
-async function renderHistory() {
+function renderHistory() {
   el.historyList.innerHTML = '';
   el.historyEmpty.classList.add('hidden');
-  let matches;
-  try {
-    const res = await fetch('/api/matches');
-    if (!res.ok) throw new Error('Laden fehlgeschlagen');
-    matches = await res.json();
-  } catch (err) {
-    el.historyEmpty.textContent = 'Verlauf konnte nicht geladen werden.';
-    el.historyEmpty.classList.remove('hidden');
-    return;
-  }
+
+  const matches = [...loadHistoryList()].sort((a, b) => (a.datum < b.datum ? 1 : -1));
 
   if (matches.length === 0) {
     el.historyEmpty.textContent = 'Noch keine gespeicherten Matches.';
@@ -236,13 +246,10 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-async function deleteHistoryEntry(id) {
+function deleteHistoryEntry(id) {
   if (!confirm('Dieses Match aus dem Verlauf löschen?')) return;
-  const res = await fetch(`/api/matches/${id}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 204) {
-    alert('Löschen fehlgeschlagen');
-    return;
-  }
+  const list = loadHistoryList().filter((m) => m.id !== id);
+  saveHistoryList(list);
   renderHistory();
 }
 
