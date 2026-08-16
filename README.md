@@ -1,19 +1,22 @@
 # BadmintonCounter
 
 Live-Punktezähler für Badminton-Matches mit Speicherung der Match-Historie.
-Läuft als installierte PWA komplett eigenständig auf dem Handy — nach der
-einmaligen Installation (siehe [Zugriff vom iPhone](#zugriff-vom-iphone-tailscale)
-unten) wird kein PC/Server mehr gebraucht, siehe [Isolierter Betrieb](#isolierter-betrieb-ohne-pc).
+Läuft als reine statische PWA — gehostet auf **GitHub Pages**, siehe
+[Zugriff vom iPhone/iPad](#zugriff-vom-iphoneipad-github-pages) unten. Kein
+eigener Server/PC nötig, weder zur Nutzung noch zur Installation: Pages ist
+selbst schon HTTPS, und der komplette Verlauf liegt im `localStorage` des
+Geräts (siehe [Isolierter Betrieb](#isolierter-betrieb-ohne-pc)).
 
-## Start (für Entwicklung/Ersteinrichtung)
+## Start (nur für lokale Entwicklung)
 
 ```bash
 npm start
 ```
 
-Läuft anschließend unter http://localhost:3200. Der Server wird nur für die
-lokale Entwicklung und die einmalige Erstinstallation auf dem Handy
-gebraucht — die App selbst spricht ihn danach nicht mehr an (siehe unten).
+Läuft anschließend unter http://localhost:3200. `server.js` dient
+ausschließlich der lokalen Entwicklung (schnelles Testen von Änderungen,
+bevor sie auf `main` gepusht werden) — für den eigentlichen Betrieb auf
+iPhone/iPad wird stattdessen die GitHub-Pages-URL benutzt, siehe unten.
 
 ## Regeln
 
@@ -67,22 +70,38 @@ durch:
 npm run gen-icons
 ```
 
-## Zugriff vom iPhone (Tailscale)
+## Zugriff vom iPhone/iPad (GitHub Pages)
 
-Für ein Homescreen-Icon mit funktionierendem Offline-Cache reicht eine
-LAN-Adresse wie `http://192.168.x.x:3200` nicht: iOS Safari registriert
-Service Worker nur auf einem sicheren Origin (HTTPS oder `localhost`), sonst
-bleibt "Zum Home-Bildschirm" nur ein Lesezeichen, das beim ersten
-WLAN-Aussetzer nicht mehr lädt. Ein selbstsigniertes Zertifikat samt
-manuellem iOS-Vertrauens-Dialog wurde dafür im Schwesterprojekt SpoPiRWK
-ausprobiert und wieder verworfen ("mehr Ärger als es wert ist") — hier
-stattdessen [Tailscale](https://tailscale.com), das für den eigenen
-Tailnet-Hostnamen automatisch ein echtes, von iOS ohne Nachfrage akzeptiertes
-Let's-Encrypt-Zertifikat ausstellt:
+`public/` wird per GitHub Actions
+([.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml))
+automatisch bei jedem Push auf `main` nach GitHub Pages deployt — erreichbar
+unter:
+
+```
+https://felix-433.github.io/BadmintonCounter-WebApp/
+```
+
+Das ist bereits echtes HTTPS (kein Zertifikats-Gefrickel wie beim
+selbstsignierten Versuch im Schwesterprojekt SpoPiRWK, kein Tailscale
+nötig), erreichbar von überall — nicht nur im selben WLAN wie ein PC.
+
+**Einmalig einzurichten** (nur im Browser der GitHub-Weboberfläche, nicht
+von mir automatisierbar): Im Repo unter **Settings → Pages → Build and
+deployment → Source** auf **"GitHub Actions"** stellen. Danach läuft der
+Workflow bei jedem Push automatisch.
+
+**Auf dem iPad/iPhone:** die URL oben in Safari öffnen, dann **Teilen → Zum
+Home-Bildschirm**. Fertig — kein PC beteiligt, weder jetzt noch später.
+
+### Alternative: lokaler Zugriff via Tailscale (nur zum Testen vor dem Push)
+
+Um eine lokale Änderung zu testen, bevor sie auf `main` gepusht (und damit
+automatisch deployt) wird, kann der lokale Dev-Server per
+[Tailscale](https://tailscale.com) mit echtem HTTPS vom iPad erreicht werden:
 
 1. Tailscale auf dem PC installieren (<https://tailscale.com/download>) und
    anmelden.
-2. Die Tailscale-App auf dem iPhone installieren und mit demselben Konto
+2. Die Tailscale-App auf dem iPad installieren und mit demselben Konto
    anmelden (gleicher Tailnet).
 3. Im Tailscale-Adminkonsole einmalig **HTTPS Certificates** aktivieren
    (Settings → HTTPS Certificates).
@@ -90,24 +109,22 @@ Let's-Encrypt-Zertifikat ausstellt:
    ```bash
    tailscale serve --bg 3200
    ```
-   Das proxied `https://<rechnername>.<tailnet>.ts.net` (Port 443) auf den
-   lokalen Server.
-5. Auf dem iPhone (im selben Tailnet) diese `https://…ts.net`-Adresse in
-   Safari öffnen und per **Teilen → Zum Home-Bildschirm** installieren.
+5. Auf dem iPad (im selben Tailnet) `https://<rechnername>.<tailnet>.ts.net`
+   in Safari öffnen.
 
 ## Isolierter Betrieb ohne PC
 
-Nach der einmaligen Installation (Schritte oben) braucht die App den
-PC/Server nicht mehr:
+Sobald die App einmal über die GitHub-Pages-URL geöffnet und per "Zum
+Home-Bildschirm" installiert wurde, braucht sie nie wieder einen eigenen
+PC/Server:
 
-- Der Service Worker cached App-Shell (HTML/CSS/JS/Icons) beim ersten
+- Der Service Worker cached die App-Shell (HTML/CSS/JS/Icons) beim ersten
   Aufruf, danach lädt das Homescreen-Icon komplett offline.
-- Match-Verlauf und laufendes Match liegen im `localStorage` des Geräts,
-  nicht auf dem Server.
+- Match-Verlauf und laufendes Match liegen im `localStorage` des Geräts.
 
-Das heißt: PC ausschalten, Tailscale/WLAN aus — die App vom Homescreen-Icon
-aus öffnen funktioniert trotzdem, Punkte zählen und Matches speichern
-inklusive. Einzige Ausnahme: um eine neue Version der App zu bekommen
-(nach einem Update dieses Projekts), muss das Handy nochmal mit
-laufendem Server online sein, damit der Service Worker die neuen Dateien
-nachladen kann.
+PC aus, kein WLAN — die App vom Homescreen-Icon aus öffnen funktioniert
+trotzdem, Punkte zählen und Matches speichern inklusive. Um eine neue
+Version zu bekommen (nach einem künftigen Update dieses Projekts), muss das
+iPad/iPhone nur wieder kurz mit *irgendeinem* Internetzugang online sein
+(GitHub Pages, nicht der eigene PC), damit der Service Worker die neuen
+Dateien nachlädt.
