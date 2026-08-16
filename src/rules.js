@@ -3,7 +3,7 @@
 //   - "bis15": ein Satz bis 15 Punkte mit 2 Punkten Vorsprung, Cap bei 21.
 // Match = in beiden Fällen Best-of-3.
 //
-// Wird 1:1 in public/js/rules.js dupliziert, damit der Client ohne Server-
+// Wird 1:1 in js/rules.js dupliziert, damit der Client ohne Server-
 // Roundtrip denselben Stand berechnen kann.
 
 const REGEL_PRESETS = {

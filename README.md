@@ -46,6 +46,16 @@ existieren weiterhin im Repo, werden von der App aber nicht mehr benutzt —
 sie dienen nur noch der lokalen Entwicklung (`npm start`) und sind für den
 normalen Betrieb auf dem iPhone optional.
 
+## Struktur
+
+Analog zum Schwesterprojekt
+[SpoPiRWK-iPad](https://github.com/Felix-433/SpoPiRWK-iPad): die statischen
+App-Dateien (`index.html`, `manifest.json`, `sw.js`, `css/`, `js/`, `icons/`)
+liegen direkt im Repo-Root statt in einem `public/`-Unterordner — dadurch
+kann GitHub Pages ohne Build-Schritt direkt von `main` deployen.
+`server.js`/`src/`/`scripts/`/`data/` liegen daneben und sind rein optional
+für die lokale Entwicklung.
+
 ## Fernbedienung (Bluetooth-Clicker)
 
 Während des Live-Scorings reagiert die App auf Tastatur-Events, damit sich
@@ -63,8 +73,7 @@ aktiv ist.
 
 ## Icons
 
-Die PWA-Icons unter `public/icons/` sind einfarbige Platzhalter, erzeugt
-durch:
+Die PWA-Icons unter `icons/` sind einfarbige Platzhalter, erzeugt durch:
 
 ```bash
 npm run gen-icons
@@ -72,10 +81,9 @@ npm run gen-icons
 
 ## Zugriff vom iPhone/iPad (GitHub Pages)
 
-`public/` wird per GitHub Actions
-([.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml))
-automatisch bei jedem Push auf `main` nach GitHub Pages deployt — erreichbar
-unter:
+Wie bei [SpoPiRWK-iPad](https://github.com/Felix-433/SpoPiRWK-iPad): GitHub
+Pages liefert den Repo-Root direkt aus, kein Build-Schritt, kein Workflow
+nötig — erreichbar unter:
 
 ```
 https://felix-433.github.io/BadmintonCounter-WebApp/
@@ -87,8 +95,9 @@ nötig), erreichbar von überall — nicht nur im selben WLAN wie ein PC.
 
 **Einmalig einzurichten** (nur im Browser der GitHub-Weboberfläche, nicht
 von mir automatisierbar): Im Repo unter **Settings → Pages → Build and
-deployment → Source** auf **"GitHub Actions"** stellen. Danach läuft der
-Workflow bei jedem Push automatisch.
+deployment → Source** auf **"Deploy from a branch"** stellen, darunter
+**Branch: `main`**, Ordner **`/ (root)`**. Danach wird bei jedem Push auf
+`main` automatisch neu deployt — kein manueller Trigger nötig.
 
 **Auf dem iPad/iPhone:** die URL oben in Safari öffnen, dann **Teilen → Zum
 Home-Bildschirm**. Fertig — kein PC beteiligt, weder jetzt noch später.

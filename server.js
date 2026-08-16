@@ -6,7 +6,10 @@ import { load } from './src/db.js';
 import { handleApi } from './src/api.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = path.join(__dirname, 'public');
+// Statische Dateien liegen direkt im Repo-Root (wie bei SpoPiRWK-iPad), nicht
+// in einem public/-Unterordner — GitHub Pages kann so ohne Build-Schritt
+// direkt von main / (root) deployen.
+const PUBLIC_DIR = __dirname;
 const PORT = process.env.PORT || 3200;
 
 const MIME_TYPES = {

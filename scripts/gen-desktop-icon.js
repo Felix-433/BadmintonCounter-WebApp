@@ -1,4 +1,4 @@
-// Erzeugt public/icons/app.ico für die Desktop-Verknüpfung — ein einzelnes
+// Erzeugt icons/app.ico für die Desktop-Verknüpfung — ein einzelnes
 // 256x256-PNG, eingebettet in einen minimalen ICO-Container (vom Explorer
 // seit Windows Vista unterstützt), ganz ohne Abhängigkeiten.
 import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ICONS_DIR = path.join(__dirname, '..', 'public', 'icons');
+const ICONS_DIR = path.join(__dirname, '..', 'icons');
 
 let crcTable;
 function crc32(buf) {
