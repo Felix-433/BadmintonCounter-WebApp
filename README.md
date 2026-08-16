@@ -24,6 +24,21 @@ angelegt, per `.gitignore` nicht versioniert). Ein laufendes Match wird
 zusätzlich im `localStorage` des Browsers gehalten, damit ein Seitenreload
 den Fortschritt nicht verliert.
 
+## Fernbedienung (Bluetooth-Clicker)
+
+Während des Live-Scorings reagiert die App auf Tastatur-Events, damit sich
+ein Bluetooth-Presenter-Clicker (meldet sich als normale Tastatur an) als
+Fernbedienung nutzen lässt, ohne das Handy anzufassen:
+
+| Taste                    | Aktion   |
+| ------------------------ | -------- |
+| `←` (Pfeil links) / `Bild ↑` | Punkt für Team A |
+| `→` (Pfeil rechts) / `Bild ↓` | Punkt für Team B |
+| `Rücktaste`               | Undo (letzter Punkt) |
+
+Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
+aktiv ist.
+
 ## Icons
 
 Die PWA-Icons unter `public/icons/` sind einfarbige Platzhalter, erzeugt

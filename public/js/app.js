@@ -232,6 +232,32 @@ el.btnUndo.addEventListener('click', undoPoint);
 el.btnCancel.addEventListener('click', cancelMatch);
 el.btnSave.addEventListener('click', saveMatch);
 
+// Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
+// normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
+// (je nach Modell). Nur aktiv während des Live-Scorings, und nicht während
+// in ein Textfeld getippt wird.
+document.addEventListener('keydown', (e) => {
+  if (!el.views.live.classList.contains('active')) return;
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+    case 'PageUp':
+      e.preventDefault();
+      scorePoint('A');
+      break;
+    case 'ArrowRight':
+    case 'PageDown':
+      e.preventDefault();
+      scorePoint('B');
+      break;
+    case 'Backspace':
+      e.preventDefault();
+      undoPoint();
+      break;
+  }
+});
+
 el.nav.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-view]');
   if (btn) showView(btn.dataset.view);
