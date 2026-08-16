@@ -1,4 +1,4 @@
-const CACHE_NAME = 'badmintoncounter-shell-v5';
+const CACHE_NAME = 'badmintoncounter-shell-v8';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

@@ -14,29 +14,46 @@
 <div id="app">
   <header class="topbar">
     <h1>🏸 BadmintonCounter</h1>
-    <nav class="tabs" id="nav">
-      <button type="button" data-view="setup">Neues Match</button>
-      <button type="button" data-view="history">Verlauf</button>
-    </nav>
+    <div class="topbar-actions">
+      <nav class="tabs" id="nav">
+        <button type="button" data-view="setup">Neues Match</button>
+        <button type="button" data-view="history">Verlauf</button>
+      </nav>
+      <button type="button" id="btn-fullscreen" class="fullscreen-btn" aria-label="Vollbildschirm umschalten" title="Vollbildschirm umschalten">⛶</button>
+    </div>
   </header>
 
   <main>
     <section id="view-setup" class="view">
       <form id="setup-form">
-        <fieldset>
-          <legend>Spielart</legend>
-          <label class="radio"><input type="radio" name="match-type" value="doppel" checked> Doppel</label>
-          <label class="radio"><input type="radio" name="match-type" value="einzel"> Einzel</label>
-        </fieldset>
+        <div class="options-row">
+          <fieldset>
+            <legend>Spielart</legend>
+            <label class="radio"><input type="radio" name="match-type" value="doppel" checked> Doppel</label>
+            <label class="radio"><input type="radio" name="match-type" value="einzel"> Einzel</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Wer schlägt zuerst auf?</legend>
+            <label class="radio"><input type="radio" name="first-server" value="A" checked> A</label>
+            <label class="radio"><input type="radio" name="first-server" value="B"> B</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Zählweise</legend>
+            <label class="radio"><input type="radio" name="modus" value="bis21" checked> bis 21 (Cap 30)</label>
+            <label class="radio"><input type="radio" name="modus" value="bis15"> bis 15 (Cap 21)</label>
+          </fieldset>
+        </div>
 
         <div class="team-group">
           <h3 class="team-heading">Team A</h3>
           <div class="team-fields">
             <label>Spieler A1
-              <input id="input-a1" name="a1" autocomplete="off" required>
+              <input id="input-a1" name="a1" autocomplete="off" value="A" required>
             </label>
             <label id="label-a2">Spieler A2
-              <input id="input-a2" name="a2" autocomplete="off">
+              <input id="input-a2" name="a2" autocomplete="off" value="B">
             </label>
           </div>
         </div>
@@ -45,25 +62,13 @@
           <h3 class="team-heading">Team B</h3>
           <div class="team-fields">
             <label>Spieler B1
-              <input id="input-b1" name="b1" autocomplete="off" required>
+              <input id="input-b1" name="b1" autocomplete="off" value="X" required>
             </label>
             <label id="label-b2">Spieler B2
-              <input id="input-b2" name="b2" autocomplete="off">
+              <input id="input-b2" name="b2" autocomplete="off" value="Y">
             </label>
           </div>
         </div>
-
-        <fieldset>
-          <legend>Wer schlägt zuerst auf?</legend>
-          <label class="radio"><input type="radio" name="first-server" value="A" checked> A</label>
-          <label class="radio"><input type="radio" name="first-server" value="B"> B</label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Zählweise</legend>
-          <label class="radio"><input type="radio" name="modus" value="bis21" checked> bis 21 (Cap 30)</label>
-          <label class="radio"><input type="radio" name="modus" value="bis15"> bis 15 (Cap 21)</label>
-        </fieldset>
 
         <button type="submit" class="primary">Match starten</button>
       </form>

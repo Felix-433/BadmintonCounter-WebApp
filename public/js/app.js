@@ -9,6 +9,7 @@ const el = {
     live: document.getElementById('view-live'),
     history: document.getElementById('view-history'),
   },
+  btnFullscreen: document.getElementById('btn-fullscreen'),
   setupForm: document.getElementById('setup-form'),
   inputA1: document.getElementById('input-a1'),
   inputA2: document.getElementById('input-a2'),
@@ -324,6 +325,23 @@ el.nav.addEventListener('click', (e) => {
 el.historyList.addEventListener('click', (e) => {
   const btn = e.target.closest('.delete-btn');
   if (btn) deleteHistoryEntry(btn.dataset.id);
+});
+
+// Vollbildschirm: nützlich beim Live-Scoring, um Browser-Chrome (Adressleiste
+// etc.) wegzubekommen. Nicht jeder Browser unterstützt das (z.B. iOS Safari
+// außerhalb einer installierten PWA) — Fehler werden dann einfach ignoriert.
+el.btnFullscreen.addEventListener('click', () => {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  const isFullscreen = !!document.fullscreenElement;
+  el.btnFullscreen.classList.toggle('active', isFullscreen);
+  el.btnFullscreen.setAttribute('aria-label', isFullscreen ? 'Vollbildschirm verlassen' : 'Vollbildschirm umschalten');
 });
 
 if ('serviceWorker' in navigator) {
