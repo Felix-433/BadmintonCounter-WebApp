@@ -1,4 +1,4 @@
-import { getSetWinner, getMatchWinner, computeState } from './rules.js';
+import { getSetWinner, getMatchWinner, computeState, REGEL_PRESETS, DEFAULT_MODUS } from './rules.js';
 
 const STORAGE_KEY = 'badmintoncounter:current';
 
@@ -10,8 +10,12 @@ const el = {
     history: document.getElementById('view-history'),
   },
   setupForm: document.getElementById('setup-form'),
-  inputA: document.getElementById('input-a'),
-  inputB: document.getElementById('input-b'),
+  inputA1: document.getElementById('input-a1'),
+  inputA2: document.getElementById('input-a2'),
+  inputB1: document.getElementById('input-b1'),
+  inputB2: document.getElementById('input-b2'),
+  labelA2: document.getElementById('label-a2'),
+  labelB2: document.getElementById('label-b2'),
   setsSummary: document.getElementById('sets-summary'),
   btnA: document.getElementById('btn-a'),
   btnB: document.getElementById('btn-b'),
@@ -30,8 +34,12 @@ const el = {
   historyEmpty: document.getElementById('history-empty'),
 };
 
-/** @type {{spielerA:string, spielerB:string, firstServer:'A'|'B', history:('A'|'B')[]}|null} */
+/** @type {{spielerA:string, spielerB:string, firstServer:'A'|'B', matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[]}|null} */
 let match = null;
+
+function regelnFuerMatch() {
+  return REGEL_PRESETS[match.modus] ?? REGEL_PRESETS[DEFAULT_MODUS];
+}
 
 function loadMatch() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -65,9 +73,10 @@ function currentServer() {
 }
 
 function renderLive() {
-  const { saetze, current } = computeState(match.history);
-  const winsA = saetze.filter((s) => getSetWinner(s.a, s.b) === 'A').length;
-  const winsB = saetze.filter((s) => getSetWinner(s.a, s.b) === 'B').length;
+  const regeln = regelnFuerMatch();
+  const { saetze, current } = computeState(match.history, regeln);
+  const winsA = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'A').length;
+  const winsB = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'B').length;
 
   el.nameA.textContent = match.spielerA;
   el.nameB.textContent = match.spielerB;
@@ -75,10 +84,14 @@ function renderLive() {
   el.scoreB.textContent = current.b;
 
   el.setsSummary.innerHTML = '';
-  const summaryLine = document.createElement('div');
-  summaryLine.className = 'sets-line';
-  summaryLine.textContent = `Sätze: ${winsA} : ${winsB}`;
-  el.setsSummary.appendChild(summaryLine);
+  const pipsLine = document.createElement('div');
+  pipsLine.className = 'sets-pips';
+  pipsLine.innerHTML = `
+    <span class="pip-team" aria-label="${winsA} von 2 Sätzen gewonnen">${'●'.repeat(winsA)}${'○'.repeat(2 - winsA)}</span>
+    <span class="pip-label">Sätze</span>
+    <span class="pip-team" aria-label="${winsB} von 2 Sätzen gewonnen">${'●'.repeat(winsB)}${'○'.repeat(2 - winsB)}</span>
+  `;
+  el.setsSummary.appendChild(pipsLine);
   if (saetze.length > 0) {
     const detail = document.createElement('div');
     detail.className = 'sets-detail';
@@ -86,7 +99,7 @@ function renderLive() {
     el.setsSummary.appendChild(detail);
   }
 
-  const matchWinner = getMatchWinner(saetze);
+  const matchWinner = getMatchWinner(saetze, regeln);
   const server = matchWinner ? null : currentServer();
   el.serveA.classList.toggle('hidden', server !== 'A');
   el.serveB.classList.toggle('hidden', server !== 'B');
@@ -104,16 +117,17 @@ function renderLive() {
   }
 }
 
-function startMatch(spielerA, spielerB, firstServer) {
-  match = { spielerA, spielerB, firstServer, history: [] };
+function startMatch(spielerA, spielerB, firstServer, matchType, modus) {
+  match = { spielerA, spielerB, firstServer, matchType, modus, history: [] };
   persistMatch();
   showView('live');
   renderLive();
 }
 
 function scorePoint(scorer) {
-  const { saetze } = computeState(match.history);
-  if (getMatchWinner(saetze)) return;
+  const regeln = regelnFuerMatch();
+  const { saetze } = computeState(match.history, regeln);
+  if (getMatchWinner(saetze, regeln)) return;
   match.history.push(scorer);
   persistMatch();
   renderLive();
@@ -134,13 +148,20 @@ function cancelMatch() {
 }
 
 async function saveMatch() {
-  const { saetze } = computeState(match.history);
+  const regeln = regelnFuerMatch();
+  const { saetze } = computeState(match.history, regeln);
   el.btnSave.disabled = true;
   try {
     const res = await fetch('/api/matches', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spielerA: match.spielerA, spielerB: match.spielerB, saetze }),
+      body: JSON.stringify({
+        spielerA: match.spielerA,
+        spielerB: match.spielerB,
+        spielart: match.matchType,
+        modus: match.modus,
+        saetze,
+      }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -161,6 +182,14 @@ function formatDatum(iso) {
   } catch {
     return iso;
   }
+}
+
+function formatSpielart(spielart) {
+  return spielart === 'einzel' ? 'Einzel' : 'Doppel';
+}
+
+function formatModus(modus) {
+  return modus === 'bis15' ? 'bis 15' : 'bis 21';
 }
 
 async function renderHistory() {
@@ -194,7 +223,7 @@ async function renderHistory() {
       <div class="history-main">
         <div class="history-players"><strong>${escapeHtml(m.spielerA)}</strong> vs <strong>${escapeHtml(m.spielerB)}</strong></div>
         <div class="history-sets">${escapeHtml(setsText)}</div>
-        <div class="history-meta">🏆 ${escapeHtml(winnerName)} · ${escapeHtml(formatDatum(m.datum))}</div>
+        <div class="history-meta">${escapeHtml(formatSpielart(m.spielart))} · ${escapeHtml(formatModus(m.modus))} · 🏆 ${escapeHtml(winnerName)} · ${escapeHtml(formatDatum(m.datum))}</div>
       </div>
       <button type="button" class="delete-btn" data-id="${m.id}" aria-label="Löschen">🗑</button>
     `;
@@ -216,14 +245,43 @@ async function deleteHistoryEntry(id) {
   renderHistory();
 }
 
+function updateMatchTypeUI() {
+  const matchType = el.setupForm.querySelector('input[name="match-type"]:checked').value;
+  const isDoppel = matchType === 'doppel';
+  el.labelA2.classList.toggle('hidden', !isDoppel);
+  el.labelB2.classList.toggle('hidden', !isDoppel);
+  el.inputA2.required = isDoppel;
+  el.inputB2.required = isDoppel;
+}
+
+el.setupForm.querySelectorAll('input[name="match-type"]').forEach((radio) => {
+  radio.addEventListener('change', updateMatchTypeUI);
+});
+updateMatchTypeUI();
+
 el.setupForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const a = el.inputA.value.trim();
-  const b = el.inputB.value.trim();
-  if (!a || !b) return;
+  const matchType = el.setupForm.querySelector('input[name="match-type"]:checked').value;
+  const modus = el.setupForm.querySelector('input[name="modus"]:checked').value;
+
+  const a1 = el.inputA1.value.trim();
+  const b1 = el.inputB1.value.trim();
+  if (!a1 || !b1) return;
+
+  let spielerA = a1;
+  let spielerB = b1;
+  if (matchType === 'doppel') {
+    const a2 = el.inputA2.value.trim();
+    const b2 = el.inputB2.value.trim();
+    if (!a2 || !b2) return;
+    spielerA = `${a1} & ${a2}`;
+    spielerB = `${b1} & ${b2}`;
+  }
+
   const firstServer = el.setupForm.querySelector('input[name="first-server"]:checked').value;
-  startMatch(a, b, firstServer);
+  startMatch(spielerA, spielerB, firstServer, matchType, modus);
   el.setupForm.reset();
+  updateMatchTypeUI();
 });
 
 el.btnA.addEventListener('click', () => scorePoint('A'));

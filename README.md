@@ -12,9 +12,17 @@ Läuft anschließend unter http://localhost:3200
 
 ## Regeln
 
-Es gelten die BWF-Rally-Point-Regeln: ein Satz geht bis 21 Punkte mit
-mindestens 2 Punkten Vorsprung, spätestens bei 30 Punkten endet der Satz
-sofort. Ein Match ist Best-of-3 (Sieg nach 2 gewonnenen Sätzen).
+Es gelten die BWF-Rally-Point-Regeln, wählbar beim Match-Start:
+
+- **bis 21** (Standard): ein Satz geht bis 21 Punkte mit mindestens 2 Punkten
+  Vorsprung, spätestens bei 30 Punkten endet der Satz sofort.
+- **bis 15**: ein Satz geht bis 15 Punkte mit mindestens 2 Punkten Vorsprung,
+  spätestens bei 21 Punkten endet der Satz sofort.
+
+Ein Match ist in beiden Fällen Best-of-3 (Sieg nach 2 gewonnenen Sätzen).
+
+Außerdem wählbar: **Doppel** (Standard, je 2 Spieler:innen pro Team) oder
+**Einzel** (1 Spieler:in pro Team).
 
 ## Daten
 

@@ -23,17 +23,42 @@
   <main>
     <section id="view-setup" class="view">
       <form id="setup-form">
-        <label>Spieler/Team A
-          <input id="input-a" name="a" autocomplete="off" required>
-        </label>
-        <label>Spieler/Team B
-          <input id="input-b" name="b" autocomplete="off" required>
-        </label>
+        <fieldset>
+          <legend>Spielart</legend>
+          <label class="radio"><input type="radio" name="match-type" value="doppel" checked> Doppel</label>
+          <label class="radio"><input type="radio" name="match-type" value="einzel"> Einzel</label>
+        </fieldset>
+
+        <div class="team-fields">
+          <label>Spieler/Team A
+            <input id="input-a1" name="a1" autocomplete="off" required>
+          </label>
+          <label id="label-a2">Partner:in A
+            <input id="input-a2" name="a2" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="team-fields">
+          <label>Spieler/Team B
+            <input id="input-b1" name="b1" autocomplete="off" required>
+          </label>
+          <label id="label-b2">Partner:in B
+            <input id="input-b2" name="b2" autocomplete="off">
+          </label>
+        </div>
+
         <fieldset>
           <legend>Wer schlägt zuerst auf?</legend>
           <label class="radio"><input type="radio" name="first-server" value="A" checked> A</label>
           <label class="radio"><input type="radio" name="first-server" value="B"> B</label>
         </fieldset>
+
+        <fieldset>
+          <legend>Zählweise</legend>
+          <label class="radio"><input type="radio" name="modus" value="bis21" checked> bis 21 (Cap 30)</label>
+          <label class="radio"><input type="radio" name="modus" value="bis15"> bis 15 (Cap 21)</label>
+        </fieldset>
+
         <button type="submit" class="primary">Match starten</button>
       </form>
     </section>

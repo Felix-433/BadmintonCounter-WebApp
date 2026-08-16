@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { save } from './db.js';
-import { isValidFinishedSet, getMatchWinner } from './rules.js';
+import { isValidFinishedSet, getMatchWinner, REGEL_PRESETS, DEFAULT_MODUS } from './rules.js';
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -30,15 +30,20 @@ function validateMatchPayload(body) {
   if (!body.spielerA || !body.spielerB) {
     return 'spielerA und spielerB sind erforderlich';
   }
+  const modus = body.modus ?? DEFAULT_MODUS;
+  const regeln = REGEL_PRESETS[modus];
+  if (!regeln) {
+    return `modus muss einer von ${Object.keys(REGEL_PRESETS).join(', ')} sein`;
+  }
   if (!Array.isArray(body.saetze) || body.saetze.length === 0) {
     return 'saetze muss ein nicht-leeres Array sein';
   }
   for (const set of body.saetze) {
-    if (!set || !isValidFinishedSet(set.a, set.b)) {
-      return `Satzstand ${JSON.stringify(set)} ist kein gültiges Satzende`;
+    if (!set || !isValidFinishedSet(set.a, set.b, regeln)) {
+      return `Satzstand ${JSON.stringify(set)} ist kein gültiges Satzende für Zählweise "${modus}"`;
     }
   }
-  const winner = getMatchWinner(body.saetze);
+  const winner = getMatchWinner(body.saetze, regeln);
   if (!winner) {
     return 'Die Sätze ergeben noch kein abgeschlossenes Match (Best-of-3)';
   }
@@ -65,13 +70,17 @@ async function handleApi(req, res, db) {
       const body = await readBody(req);
       const error = validateMatchPayload(body);
       if (error) return sendJson(res, 400, { error });
+      const modus = body.modus ?? DEFAULT_MODUS;
+      const regeln = REGEL_PRESETS[modus];
       const match = {
         id: randomUUID(),
         datum: body.datum ?? new Date().toISOString(),
         spielerA: body.spielerA,
         spielerB: body.spielerB,
+        spielart: body.spielart === 'einzel' ? 'einzel' : 'doppel',
+        modus,
         saetze: body.saetze.map((s) => ({ a: s.a, b: s.b })),
-        gewinner: getMatchWinner(body.saetze),
+        gewinner: getMatchWinner(body.saetze, regeln),
       };
       db.matches.push(match);
       save(db);

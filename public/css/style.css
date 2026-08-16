@@ -108,6 +108,16 @@ main {
   color: var(--text-dim);
 }
 
+.team-fields {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.team-fields label {
+  flex: 1;
+  min-width: 0;
+}
+
 #setup-form input[type="text"],
 #setup-form input:not([type]) {
   background: var(--panel);
@@ -159,10 +169,24 @@ button.primary {
   color: var(--text-dim);
 }
 
-.sets-line {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
+.sets-pips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.pip-team {
+  font-size: 1.3rem;
+  letter-spacing: 0.25rem;
+  color: var(--accent);
+}
+
+.pip-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08rem;
+  color: var(--text-dim);
 }
 
 .sets-detail {
