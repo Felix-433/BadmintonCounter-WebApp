@@ -13,9 +13,15 @@ function dbg(msg) {
   if (!debugLogEl) {
     debugLogEl = document.createElement('div');
     debugLogEl.id = 'debug-log';
+    // Feste Höhe (nicht max-height/auto-wachsend!) — ein während einer
+    // laufenden Berührung live nachwachsendes Overlay kann iOS Safaris
+    // Touch-Geste durcheinanderbringen (Ziel-Element wechselt unter dem
+    // Finger), wodurch das "click" danach ausbleibt. Fest positioniert und
+    // touch-action:none, damit es selbst nie Ziel eines Scoring-Taps wird.
     debugLogEl.style.cssText =
-      'position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow-y:auto;' +
-      'background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:6px;z-index:99999;white-space:pre-wrap;';
+      'position:fixed;left:0;right:0;bottom:0;height:18vh;overflow-y:auto;' +
+      'background:rgba(0,0,0,0.85);color:#0f0;font:10px monospace;padding:6px;' +
+      'z-index:99999;white-space:pre-wrap;pointer-events:none;';
     document.body.appendChild(debugLogEl);
   }
   const line = document.createElement('div');
