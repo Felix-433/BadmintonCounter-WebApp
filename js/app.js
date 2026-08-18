@@ -3,6 +3,26 @@ import { getSetWinner, getMatchWinner, computeState, REGEL_PRESETS, DEFAULT_MODU
 const STORAGE_KEY = 'badmintoncounter:current';
 const HISTORY_KEY = 'badmintoncounter:history';
 
+// Temporäres Debug-Overlay für die Maus-Fernbedienung, nur mit ?debug=1
+// aktiv — zeigt live, welche Events/Zustände beim Klicken/Halten in der
+// echten App ankommen (auf dem iPad gibt es sonst keine Konsole).
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+let debugLogEl = null;
+function dbg(msg) {
+  if (!DEBUG) return;
+  if (!debugLogEl) {
+    debugLogEl = document.createElement('div');
+    debugLogEl.id = 'debug-log';
+    debugLogEl.style.cssText =
+      'position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow-y:auto;' +
+      'background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:6px;z-index:99999;white-space:pre-wrap;';
+    document.body.appendChild(debugLogEl);
+  }
+  const line = document.createElement('div');
+  line.textContent = `${new Date().toLocaleTimeString('de-DE')} ${msg}`;
+  debugLogEl.prepend(line);
+}
+
 function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -236,11 +256,18 @@ function startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA,
 function scorePoint(scorer) {
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
-  if (getMatchWinner(saetze, regeln)) return;
-  if (needsNewSetPrompt()) return;
+  if (getMatchWinner(saetze, regeln)) {
+    dbg(`scorePoint(${scorer}): abgebrochen, Match bereits gewonnen`);
+    return;
+  }
+  if (needsNewSetPrompt()) {
+    dbg(`scorePoint(${scorer}): abgebrochen, needsNewSetPrompt()=true (Satzwechsel-Abfrage offen)`);
+    return;
+  }
   match.history.push(scorer);
   persistMatch();
   renderLive();
+  dbg(`scorePoint(${scorer}): OK, history.length=${match.history.length}`);
 }
 
 function undoPoint() {
@@ -255,10 +282,14 @@ function undoPoint() {
 // linke/rechte Taste halten korrigiert nur die eigene Seite.
 function removeLastPointFromSide(side) {
   const idx = match.history.lastIndexOf(side);
-  if (idx === -1) return;
+  if (idx === -1) {
+    dbg(`removeLastPointFromSide(${side}): abgebrochen, kein Punkt von ${side} vorhanden`);
+    return;
+  }
   match.history.splice(idx, 1);
   persistMatch();
   renderLive();
+  dbg(`removeLastPointFromSide(${side}): OK, history.length=${match.history.length}`);
 }
 
 function cancelMatch() {
@@ -498,6 +529,7 @@ el.btnSave.addEventListener('click', saveMatch);
 // wenn e.button bei einer getarnten Maus nicht zuverlässig 0/2 meldet.
 document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
+  dbg(`pointerdown(capture) type=${e.pointerType} button=${e.button} w=${e.width} h=${e.height} → lastPointerWasMouse=${lastPointerWasMouse}`);
 }, true);
 
 // Maus: Taste lange halten zieht der jeweils eigenen Seite gezielt den
@@ -519,20 +551,34 @@ function clearLongPressTimer() {
 }
 
 document.addEventListener('pointerdown', (e) => {
-  if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) return;
-  if (!el.views.live.classList.contains('active')) return;
-  if (isOtherControl(e.target)) return;
+  if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) {
+    dbg(`longpress-arm: abgebrochen (isPreciseMousePointer=${isPreciseMousePointer(e)}, button=${e.button})`);
+    return;
+  }
+  if (!el.views.live.classList.contains('active')) {
+    dbg('longpress-arm: abgebrochen (Live-Ansicht nicht aktiv)');
+    return;
+  }
+  if (isOtherControl(e.target)) {
+    dbg(`longpress-arm: abgebrochen (isOtherControl=true, target=${e.target.tagName}.${e.target.className})`);
+    return;
+  }
 
+  dbg(`longpress-arm: Timer gestartet für button=${e.button} (target=${e.target.tagName}.${e.target.className})`);
   longPressFired = false;
   longPressButton = e.button;
   longPressTimer = setTimeout(() => {
     longPressFired = true;
+    dbg(`longpress AUSGELÖST für ${longPressButton === 0 ? 'A' : 'B'}`);
     removeLastPointFromSide(longPressButton === 0 ? 'A' : 'B');
     longPressTimer = null;
   }, LONG_PRESS_MS);
 });
 
-document.addEventListener('pointerup', clearLongPressTimer);
+document.addEventListener('pointerup', (e) => {
+  dbg(`pointerup type=${e.pointerType} button=${e.button} (Timer aktiv: ${!!longPressTimer})`);
+  clearLongPressTimer();
+});
 document.addEventListener('pointerleave', clearLongPressTimer, true);
 document.addEventListener('pointercancel', clearLongPressTimer);
 
@@ -546,26 +592,45 @@ function isOtherControl(target) {
 }
 
 document.addEventListener('click', (e) => {
+  dbg(`click target=${e.target.tagName}.${e.target.className} lastPointerWasMouse=${lastPointerWasMouse} longPressFired=${longPressFired}`);
   if (!lastPointerWasMouse) return;
   if (longPressFired) {
     longPressFired = false;
     return;
   }
-  if (!el.views.live.classList.contains('active')) return;
-  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-  if (isOtherControl(e.target)) return;
+  if (!el.views.live.classList.contains('active')) {
+    dbg('click: abgebrochen (Live-Ansicht nicht aktiv)');
+    return;
+  }
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    dbg('click: abgebrochen (Textfeld fokussiert)');
+    return;
+  }
+  if (isOtherControl(e.target)) {
+    dbg('click: abgebrochen (isOtherControl=true)');
+    return;
+  }
+  dbg('click: scorePoint(A)');
   scorePoint('A');
 });
 
 document.addEventListener('contextmenu', (e) => {
-  if (!el.views.live.classList.contains('active')) return;
+  dbg(`contextmenu target=${e.target.tagName}.${e.target.className} longPressFired=${longPressFired}`);
+  if (!el.views.live.classList.contains('active')) {
+    dbg('contextmenu: abgebrochen (Live-Ansicht nicht aktiv)');
+    return;
+  }
   e.preventDefault();
   if (longPressFired) {
     longPressFired = false;
     return;
   }
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-  if (isOtherControl(e.target)) return;
+  if (isOtherControl(e.target)) {
+    dbg('contextmenu: abgebrochen (isOtherControl=true)');
+    return;
+  }
+  dbg('contextmenu: scorePoint(B)');
   scorePoint('B');
 });
 
