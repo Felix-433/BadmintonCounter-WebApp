@@ -489,10 +489,20 @@ document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
+// Klicks auf andere Buttons (Undo, Match abbrechen/speichern, "Weiter" beim
+// Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen Punkt geben —
+// nur echte Klicks auf freie Fläche oder direkt auf die Score-Buttons zählen
+// hier mit.
+function isOtherControl(target) {
+  const control = target.closest('button, a, input, select, textarea');
+  return control && control !== el.btnA && control !== el.btnB;
+}
+
 document.addEventListener('click', (e) => {
   if (!lastPointerWasMouse) return;
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (isOtherControl(e.target)) return;
   scorePoint('A');
 });
 
@@ -500,6 +510,7 @@ document.addEventListener('contextmenu', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   e.preventDefault();
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (isOtherControl(e.target)) return;
   scorePoint('B');
 });
 
