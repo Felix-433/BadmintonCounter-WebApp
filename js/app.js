@@ -445,14 +445,27 @@ el.setupForm.addEventListener('submit', (e) => {
   updateMatchTypeUI();
 });
 
-// Merkt sich, ob die letzte Zeigereingabe von einer echten Maus stammte.
-// Wird gebraucht, damit die Button-Klick-Handler unten bei Mausklicks nicht
-// zusätzlich zur globalen Maustasten-Fernbedienung feuern (keine Doppelzählung),
-// Touch/Tap auf den Buttons (z.B. iPad) aber unverändert funktioniert.
-let lastPointerType = 'touch';
+// Merkt sich, ob die letzte Zeigereingabe von einer (ggf. als Touch
+// getarnten, siehe unten) Maus stammte. Wird gebraucht, damit die
+// Button-Klick-Handler unten bei Mausklicks nicht zusätzlich zur globalen
+// Maustasten-Fernbedienung feuern (keine Doppelzählung), Touch/Tap auf den
+// Buttons (z.B. Finger auf einem Tablet) aber unverändert funktioniert.
+let lastPointerWasMouse = false;
 
-el.btnA.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('A'); });
-el.btnB.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('B'); });
+// iPadOS meldet eine echte angeschlossene Bluetooth-Maus/Trackpad in Safari
+// oft als pointerType "touch" statt "mouse" (WebKit tarnt externe Zeiger als
+// Touch, aus Kompatibilität mit touch-only Webseiten) — ein simples
+// pointerType==='mouse' erkennt so eine Maus auf dem iPad also nicht. Ein
+// Finger hat aber eine spürbare Kontaktfläche, ein Maus-/Trackpad-Zeiger
+// dagegen praktisch keine (width/height ~0-1) — das lässt sich zuverlässig
+// unterscheiden.
+function isPreciseMousePointer(e) {
+  if (e.pointerType === 'mouse') return true;
+  return e.pointerType === 'touch' && e.width <= 1 && e.height <= 1;
+}
+
+el.btnA.addEventListener('click', () => { if (lastPointerWasMouse) return; scorePoint('A'); });
+el.btnB.addEventListener('click', () => { if (lastPointerWasMouse) return; scorePoint('B'); });
 el.btnNewSetConfirm.addEventListener('click', () => {
   const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
   const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
@@ -466,23 +479,28 @@ el.btnSave.addEventListener('click', saveMatch);
 
 // Bluetooth-Maus als Fernbedienung: linke Maustaste = Punkt Team A, rechte
 // Maustaste = Punkt Team B, überall im Live-Scoring-Bildschirm (nicht nur auf
-// den Buttons). Über pointerType von Touch-Eingaben unterschieden, damit
-// Antippen der Buttons auf Touchgeräten nicht versehentlich mitzählt.
+// den Buttons). lastPointerWasMouse kommt vom pointerdown (siehe
+// isPreciseMousePointer oben), die eigentliche Zählung hängt aber am
+// "click"-Event statt am pointerdown/e.button: ein Rechtsklick/sekundärer
+// Klick löst per Spezifikation nie ein "click"-Event aus (auch nicht als
+// Touch getarnt) — dadurch kann links und rechts nie doppelt zählen, selbst
+// wenn e.button bei einer getarnten Maus nicht zuverlässig 0/2 meldet.
 document.addEventListener('pointerdown', (e) => {
-  lastPointerType = e.pointerType;
-  if (e.pointerType !== 'mouse') return;
-  if (!el.views.live.classList.contains('active')) return;
-  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-  if (e.button === 0) {
-    scorePoint('A');
-  } else if (e.button === 2) {
-    scorePoint('B');
-  }
+  lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
+document.addEventListener('click', (e) => {
+  if (!lastPointerWasMouse) return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  scorePoint('A');
+});
+
 document.addEventListener('contextmenu', (e) => {
-  if (el.views.live.classList.contains('active')) e.preventDefault();
+  if (!el.views.live.classList.contains('active')) return;
+  e.preventDefault();
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  scorePoint('B');
 });
 
 // Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
