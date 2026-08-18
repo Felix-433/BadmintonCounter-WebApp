@@ -38,6 +38,15 @@ const el = {
   labelA2: document.getElementById('label-a2'),
   labelB2: document.getElementById('label-b2'),
   setsSummary: document.getElementById('sets-summary'),
+  newSetPrompt: document.getElementById('new-set-prompt'),
+  newSetTitle: document.getElementById('new-set-title'),
+  newSetLegendA: document.getElementById('new-set-legend-a'),
+  newSetLegendB: document.getElementById('new-set-legend-b'),
+  newSetA1Name: document.getElementById('new-set-a1-name'),
+  newSetA2Name: document.getElementById('new-set-a2-name'),
+  newSetB1Name: document.getElementById('new-set-b1-name'),
+  newSetB2Name: document.getElementById('new-set-b2-name'),
+  btnNewSetConfirm: document.getElementById('btn-new-set-confirm'),
   btnA: document.getElementById('btn-a'),
   btnB: document.getElementById('btn-b'),
   nameA: document.getElementById('name-a'),
@@ -58,7 +67,12 @@ const el = {
   inputImport: document.getElementById('input-import'),
 };
 
-/** @type {{spielerA:string, spielerB:string, firstServer:'A'|'B', matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[]}|null} */
+/**
+ * @typedef {Object} RightCourtAssignment
+ * @property {0|1} A - Index in playersA, wer bei Team A zu Beginn dieses Satzes im rechten Feld steht.
+ * @property {0|1} B - Index in playersB, wer bei Team B zu Beginn dieses Satzes im rechten Feld steht.
+ */
+/** @type {{spielerA:string, spielerB:string, playersA:?[string,string], playersB:?[string,string], firstServer:'A'|'B', matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[], rightCourtStart:RightCourtAssignment[]}|null} */
 let match = null;
 
 function regelnFuerMatch() {
@@ -96,6 +110,59 @@ function currentServer() {
   return match.history[match.history.length - 1];
 }
 
+// Index des laufenden (noch nicht abgeschlossenen) Satzes, 0-basiert.
+function currentSetIndex() {
+  const regeln = regelnFuerMatch();
+  return computeState(match.history, regeln).saetze.length;
+}
+
+// Beim Doppel schlägt pro Satz und Team immer nur eine bestimmte Person auf:
+// wer zu Satzbeginn im rechten Feld steht, wechselt sich nur innerhalb des
+// eigenen Aufschlags ab (rechts bei geradem, links bei ungeradem eigenem
+// Punktestand). Der/die Partner*in kommt erst im nächsten Satz wieder dran.
+// Deshalb muss vor jedem neuen Satz erfragt werden, wer diesmal rechts steht.
+function needsNewSetPrompt() {
+  if (match.matchType !== 'doppel') return false;
+  if (!match.playersA || !match.playersB) return false;
+  const regeln = regelnFuerMatch();
+  const { saetze } = computeState(match.history, regeln);
+  if (getMatchWinner(saetze, regeln)) return false;
+  return !match.rightCourtStart[saetze.length];
+}
+
+function currentServerPlayerName() {
+  if (match.matchType !== 'doppel' || !match.playersA || !match.playersB) return null;
+  const regeln = regelnFuerMatch();
+  const { saetze, current } = computeState(match.history, regeln);
+  if (getMatchWinner(saetze, regeln)) return null;
+  const setIndex = saetze.length;
+  const assignment = match.rightCourtStart[setIndex];
+  if (!assignment) return null;
+
+  // Wer im rechten Feld steht, ist nicht einfach "gerade → Person X": die
+  // Position wechselt innerhalb des Satzes nur, wenn ein Team beim eigenen
+  // Aufschlag selbst punktet (Aufschlag verteidigt). Punktet stattdessen das
+  // gegnerische Team (Seitenwechsel), bleibt die Zuordnung unverändert, und
+  // die Person, die zum neuen Punktstand passt, schlägt auf. Deshalb wird
+  // hier der laufende Satz Punkt für Punkt nachsimuliert statt der aktuelle
+  // Stand direkt in eine feste rechts/links-Zuordnung übersetzt.
+  let consumed = 0;
+  for (const s of saetze) consumed += s.a + s.b;
+
+  const right = { A: assignment.A, B: assignment.B };
+  for (let i = consumed; i < match.history.length; i++) {
+    const scorer = match.history[i];
+    const server = i === 0 ? match.firstServer : match.history[i - 1];
+    if (scorer === server) right[scorer] = right[scorer] === 0 ? 1 : 0;
+  }
+
+  const serverTeam = currentServer();
+  const score = serverTeam === 'A' ? current.a : current.b;
+  const players = serverTeam === 'A' ? match.playersA : match.playersB;
+  const servingIndex = score % 2 === 0 ? right[serverTeam] : 1 - right[serverTeam];
+  return players[servingIndex];
+}
+
 function renderLive() {
   const regeln = regelnFuerMatch();
   const { saetze, current } = computeState(match.history, regeln);
@@ -124,12 +191,30 @@ function renderLive() {
   }
 
   const matchWinner = getMatchWinner(saetze, regeln);
-  const server = matchWinner ? null : currentServer();
+  const showNewSetPrompt = !matchWinner && needsNewSetPrompt();
+
+  if (showNewSetPrompt) {
+    el.newSetTitle.textContent = `Satz ${saetze.length + 1}: Wer steht im rechten Feld?`;
+    el.newSetLegendA.textContent = match.spielerA;
+    el.newSetLegendB.textContent = match.spielerB;
+    el.newSetA1Name.textContent = match.playersA[0];
+    el.newSetA2Name.textContent = match.playersA[1];
+    el.newSetB1Name.textContent = match.playersB[0];
+    el.newSetB2Name.textContent = match.playersB[1];
+    el.newSetPrompt.querySelectorAll('input[name="new-set-a"]').forEach((r) => { r.checked = r.value === '0'; });
+    el.newSetPrompt.querySelectorAll('input[name="new-set-b"]').forEach((r) => { r.checked = r.value === '0'; });
+  }
+  el.newSetPrompt.classList.toggle('hidden', !showNewSetPrompt);
+
+  const server = matchWinner || showNewSetPrompt ? null : currentServer();
+  const serverPlayerName = server ? currentServerPlayerName() : null;
+  el.serveA.textContent = server === 'A' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
+  el.serveB.textContent = server === 'B' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
   el.serveA.classList.toggle('hidden', server !== 'A');
   el.serveB.classList.toggle('hidden', server !== 'B');
 
-  el.btnA.disabled = !!matchWinner;
-  el.btnB.disabled = !!matchWinner;
+  el.btnA.disabled = !!matchWinner || showNewSetPrompt;
+  el.btnB.disabled = !!matchWinner || showNewSetPrompt;
   el.btnUndo.disabled = match.history.length === 0;
 
   if (matchWinner) {
@@ -141,8 +226,8 @@ function renderLive() {
   }
 }
 
-function startMatch(spielerA, spielerB, firstServer, matchType, modus) {
-  match = { spielerA, spielerB, firstServer, matchType, modus, history: [] };
+function startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA, playersB) {
+  match = { spielerA, spielerB, playersA, playersB, firstServer, matchType, modus, history: [], rightCourtStart: [] };
   persistMatch();
   showView('live');
   renderLive();
@@ -152,6 +237,7 @@ function scorePoint(scorer) {
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
   if (getMatchWinner(saetze, regeln)) return;
+  if (needsNewSetPrompt()) return;
   match.history.push(scorer);
   persistMatch();
   renderLive();
@@ -341,25 +427,63 @@ el.setupForm.addEventListener('submit', (e) => {
 
   let spielerA = a1;
   let spielerB = b1;
+  let playersA = null;
+  let playersB = null;
   if (matchType === 'doppel') {
     const a2 = el.inputA2.value.trim();
     const b2 = el.inputB2.value.trim();
     if (!a2 || !b2) return;
     spielerA = `${a1} & ${a2}`;
     spielerB = `${b1} & ${b2}`;
+    playersA = [a1, a2];
+    playersB = [b1, b2];
   }
 
   const firstServer = el.setupForm.querySelector('input[name="first-server"]:checked').value;
-  startMatch(spielerA, spielerB, firstServer, matchType, modus);
+  startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA, playersB);
   el.setupForm.reset();
   updateMatchTypeUI();
 });
 
-el.btnA.addEventListener('click', () => scorePoint('A'));
-el.btnB.addEventListener('click', () => scorePoint('B'));
+// Merkt sich, ob die letzte Zeigereingabe von einer echten Maus stammte.
+// Wird gebraucht, damit die Button-Klick-Handler unten bei Mausklicks nicht
+// zusätzlich zur globalen Maustasten-Fernbedienung feuern (keine Doppelzählung),
+// Touch/Tap auf den Buttons (z.B. iPad) aber unverändert funktioniert.
+let lastPointerType = 'touch';
+
+el.btnA.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('A'); });
+el.btnB.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('B'); });
+el.btnNewSetConfirm.addEventListener('click', () => {
+  const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
+  const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
+  match.rightCourtStart[currentSetIndex()] = { A: aIndex, B: bIndex };
+  persistMatch();
+  renderLive();
+});
 el.btnUndo.addEventListener('click', undoPoint);
 el.btnCancel.addEventListener('click', cancelMatch);
 el.btnSave.addEventListener('click', saveMatch);
+
+// Bluetooth-Maus als Fernbedienung: linke Maustaste = Punkt Team A, rechte
+// Maustaste = Punkt Team B, überall im Live-Scoring-Bildschirm (nicht nur auf
+// den Buttons). Über pointerType von Touch-Eingaben unterschieden, damit
+// Antippen der Buttons auf Touchgeräten nicht versehentlich mitzählt.
+document.addEventListener('pointerdown', (e) => {
+  lastPointerType = e.pointerType;
+  if (e.pointerType !== 'mouse') return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  if (e.button === 0) {
+    scorePoint('A');
+  } else if (e.button === 2) {
+    scorePoint('B');
+  }
+}, true);
+
+document.addEventListener('contextmenu', (e) => {
+  if (el.views.live.classList.contains('active')) e.preventDefault();
+});
 
 // Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
 // normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
@@ -431,6 +555,10 @@ if ('serviceWorker' in navigator) {
 // Init
 match = loadMatch();
 if (match) {
+  // Ältere gespeicherte Matches (vor Einführung der Aufschlagsposition beim
+  // Doppel) haben noch kein rightCourtStart-Feld — ohne Nachrüsten würde
+  // needsNewSetPrompt() beim Zugriff darauf abstürzen.
+  if (!Array.isArray(match.rightCourtStart)) match.rightCourtStart = [];
   showView('live');
   renderLive();
 } else {

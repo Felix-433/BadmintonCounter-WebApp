@@ -77,6 +77,21 @@
     <section id="view-live" class="view">
       <div class="sets-summary" id="sets-summary"></div>
 
+      <div id="new-set-prompt" class="new-set-banner hidden">
+        <p id="new-set-title"></p>
+        <fieldset>
+          <legend id="new-set-legend-a">Team A</legend>
+          <label class="radio"><input type="radio" name="new-set-a" value="0" checked> <span id="new-set-a1-name"></span></label>
+          <label class="radio"><input type="radio" name="new-set-a" value="1"> <span id="new-set-a2-name"></span></label>
+        </fieldset>
+        <fieldset>
+          <legend id="new-set-legend-b">Team B</legend>
+          <label class="radio"><input type="radio" name="new-set-b" value="0" checked> <span id="new-set-b1-name"></span></label>
+          <label class="radio"><input type="radio" name="new-set-b" value="1"> <span id="new-set-b2-name"></span></label>
+        </fieldset>
+        <button type="button" class="primary" id="btn-new-set-confirm">Weiter</button>
+      </div>
+
       <div class="court">
         <button type="button" class="score-btn side-a" id="btn-a">
           <span class="player-name" id="name-a"></span>

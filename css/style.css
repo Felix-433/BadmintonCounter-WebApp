@@ -333,6 +333,22 @@ button.primary {
   opacity: 0.4;
 }
 
+.new-set-banner {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.new-set-banner p {
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
 .match-over-banner {
   background: var(--panel);
   border: 1px solid var(--ok);
