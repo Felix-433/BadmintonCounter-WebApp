@@ -3,32 +3,6 @@ import { getSetWinner, getMatchWinner, computeState, REGEL_PRESETS, DEFAULT_MODU
 const STORAGE_KEY = 'badmintoncounter:current';
 const HISTORY_KEY = 'badmintoncounter:history';
 
-// Temporäres Debug-Overlay für die Maus-Fernbedienung, nur mit ?debug=1
-// aktiv — zeigt live, welche Events/Zustände beim Klicken/Halten in der
-// echten App ankommen (auf dem iPad gibt es sonst keine Konsole).
-const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-let debugLogEl = null;
-function dbg(msg) {
-  if (!DEBUG) return;
-  if (!debugLogEl) {
-    debugLogEl = document.createElement('div');
-    debugLogEl.id = 'debug-log';
-    // Feste Höhe (nicht max-height/auto-wachsend!) — ein während einer
-    // laufenden Berührung live nachwachsendes Overlay kann iOS Safaris
-    // Touch-Geste durcheinanderbringen (Ziel-Element wechselt unter dem
-    // Finger), wodurch das "click" danach ausbleibt. Fest positioniert und
-    // touch-action:none, damit es selbst nie Ziel eines Scoring-Taps wird.
-    debugLogEl.style.cssText =
-      'position:fixed;left:0;right:0;bottom:0;height:18vh;overflow-y:auto;' +
-      'background:rgba(0,0,0,0.85);color:#0f0;font:10px monospace;padding:6px;' +
-      'z-index:99999;white-space:pre-wrap;pointer-events:none;';
-    document.body.appendChild(debugLogEl);
-  }
-  const line = document.createElement('div');
-  line.textContent = `${new Date().toLocaleTimeString('de-DE')} ${msg}`;
-  debugLogEl.prepend(line);
-}
-
 function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -262,18 +236,11 @@ function startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA,
 function scorePoint(scorer) {
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
-  if (getMatchWinner(saetze, regeln)) {
-    dbg(`scorePoint(${scorer}): abgebrochen, Match bereits gewonnen`);
-    return;
-  }
-  if (needsNewSetPrompt()) {
-    dbg(`scorePoint(${scorer}): abgebrochen, needsNewSetPrompt()=true (Satzwechsel-Abfrage offen)`);
-    return;
-  }
+  if (getMatchWinner(saetze, regeln)) return;
+  if (needsNewSetPrompt()) return;
   match.history.push(scorer);
   persistMatch();
   renderLive();
-  dbg(`scorePoint(${scorer}): OK, history.length=${match.history.length}`);
 }
 
 function undoPoint() {
@@ -288,14 +255,10 @@ function undoPoint() {
 // linke/rechte Taste halten korrigiert nur die eigene Seite.
 function removeLastPointFromSide(side) {
   const idx = match.history.lastIndexOf(side);
-  if (idx === -1) {
-    dbg(`removeLastPointFromSide(${side}): abgebrochen, kein Punkt von ${side} vorhanden`);
-    return;
-  }
+  if (idx === -1) return;
   match.history.splice(idx, 1);
   persistMatch();
   renderLive();
-  dbg(`removeLastPointFromSide(${side}): OK, history.length=${match.history.length}`);
 }
 
 function cancelMatch() {
@@ -538,7 +501,6 @@ el.btnSave.addEventListener('click', saveMatch);
 // Kontextmenüs bzw. als Sicherheitsnetz benutzt, nie fürs Zählen selbst.
 document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
-  dbg(`pointerdown(capture) type=${e.pointerType} button=${e.button} w=${e.width} h=${e.height} → lastPointerWasMouse=${lastPointerWasMouse}`);
 }, true);
 
 // Klicks/Presses auf andere Buttons (Undo, Match abbrechen/speichern,
@@ -566,26 +528,15 @@ function clearLongPressTimer() {
 document.addEventListener('pointerdown', (e) => {
   clearLongPressTimer(); // Absicherung gegen einen evtl. noch übrig gebliebenen Timer.
   longPressArmed = false;
-  if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) {
-    dbg(`longpress-arm: abgebrochen (isPreciseMousePointer=${isPreciseMousePointer(e)}, button=${e.button})`);
-    return;
-  }
-  if (!el.views.live.classList.contains('active')) {
-    dbg('longpress-arm: abgebrochen (Live-Ansicht nicht aktiv)');
-    return;
-  }
-  if (isOtherControl(e.target)) {
-    dbg(`longpress-arm: abgebrochen (isOtherControl=true, target=${e.target.tagName}.${e.target.className})`);
-    return;
-  }
+  if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (isOtherControl(e.target)) return;
 
-  dbg(`longpress-arm: Timer gestartet für button=${e.button} (target=${e.target.tagName}.${e.target.className})`);
   longPressArmed = true;
   longPressFired = false;
   longPressButton = e.button;
   longPressTimer = setTimeout(() => {
     longPressFired = true;
-    dbg(`longpress AUSGELÖST für ${longPressButton === 0 ? 'A' : 'B'}`);
     removeLastPointFromSide(longPressButton === 0 ? 'A' : 'B');
     longPressTimer = null;
   }, LONG_PRESS_MS);
@@ -596,7 +547,6 @@ document.addEventListener('pointerdown', (e) => {
 // unabhängig davon, ob/wann das jeweilige Gerät zusätzlich ein "click"- oder
 // "contextmenu"-Event feuert.
 document.addEventListener('pointerup', (e) => {
-  dbg(`pointerup type=${e.pointerType} button=${e.button} armed=${longPressArmed} timerAktiv=${!!longPressTimer} fired=${longPressFired}`);
   const timerWarNochAktiv = !!longPressTimer;
   clearLongPressTimer();
 
@@ -607,21 +557,13 @@ document.addEventListener('pointerup', (e) => {
   if (!longPressArmed || !timerWarNochAktiv) return; // War kein von uns verwalteter Score-Press.
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
-  const scorer = e.button === 0 ? 'A' : 'B';
-  dbg(`pointerup: scorePoint(${scorer}) [Kurzklick]`);
-  scorePoint(scorer);
+  scorePoint(e.button === 0 ? 'A' : 'B');
 });
 
 document.addEventListener('pointerleave', clearLongPressTimer, true);
 document.addEventListener('pointercancel', clearLongPressTimer);
 
-// Nur noch fürs Unterdrücken des nativen Kontextmenüs bzw. als Sicherheitsnetz
-// falls doch mal ein "click" ohne zugehöriges pointerup-Paar durchkäme —
-// zählt selbst nichts mehr.
-document.addEventListener('click', (e) => {
-  dbg(`click target=${e.target.tagName}.${e.target.className} (nur Log, zählt nicht mehr selbst)`);
-});
-
+// Nur noch fürs Unterdrücken des nativen Kontextmenüs — zählt selbst nichts.
 document.addEventListener('contextmenu', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   e.preventDefault();
