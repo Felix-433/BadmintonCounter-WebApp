@@ -528,26 +528,33 @@ el.btnSave.addEventListener('click', saveMatch);
 // Bluetooth-Maus als Fernbedienung: linke Maustaste = Punkt Team A, rechte
 // Maustaste = Punkt Team B, überall im Live-Scoring-Bildschirm (nicht nur auf
 // den Buttons). lastPointerWasMouse kommt vom pointerdown (siehe
-// isPreciseMousePointer oben), die eigentliche Zählung hängt aber am
-// "click"-Event statt am pointerdown/e.button: ein Rechtsklick/sekundärer
-// Klick löst per Spezifikation nie ein "click"-Event aus (auch nicht als
-// Touch getarnt) — dadurch kann links und rechts nie doppelt zählen, selbst
-// wenn e.button bei einer getarnten Maus nicht zuverlässig 0/2 meldet.
+// isPreciseMousePointer oben).
+//
+// Kurz vs. lang wird komplett über pointerdown/pointerup entschieden, NICHT
+// über "click"/"contextmenu": auf manchen iPad-Trackpads feuert
+// "contextmenu" nachweislich sofort bei Tastendruck, unabhängig davon wie
+// lange gehalten wird (kein verlässliches "erst bei Loslassen"-Timing) —
+// "click"/"contextmenu" werden hier nur noch fürs Unterdrücken des
+// Kontextmenüs bzw. als Sicherheitsnetz benutzt, nie fürs Zählen selbst.
 document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
   dbg(`pointerdown(capture) type=${e.pointerType} button=${e.button} w=${e.width} h=${e.height} → lastPointerWasMouse=${lastPointerWasMouse}`);
 }, true);
 
-// Maus: Taste lange halten zieht der jeweils eigenen Seite gezielt den
-// letzten Punkt zurück (links = A, rechts = B) — symmetrisch zum
-// Klick-Schema (links = +1 A, rechts = +1 B). Nur bei echter Maus
-// (isPreciseMousePointer). longPressFired unterdrückt danach das
-// nachfolgende "click"- bzw. "contextmenu"-Event, das sonst zusätzlich
-// einen Punkt geben würde.
+// Klicks/Presses auf andere Buttons (Undo, Match abbrechen/speichern,
+// "Weiter" beim Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen
+// Punkt geben — nur echte Klicks auf freie Fläche oder direkt auf die
+// Score-Buttons zählen hier mit.
+function isOtherControl(target) {
+  const control = target.closest('button, a, input, select, textarea');
+  return control && control !== el.btnA && control !== el.btnB;
+}
+
 const LONG_PRESS_MS = 500;
 let longPressTimer = null;
 let longPressButton = null; // 0 = links (A), 2 = rechts (B)
 let longPressFired = false;
+let longPressArmed = false; // true, sobald pointerdown die Bedingungen unten erfüllt hat
 
 function clearLongPressTimer() {
   if (longPressTimer) {
@@ -557,6 +564,8 @@ function clearLongPressTimer() {
 }
 
 document.addEventListener('pointerdown', (e) => {
+  clearLongPressTimer(); // Absicherung gegen einen evtl. noch übrig gebliebenen Timer.
+  longPressArmed = false;
   if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) {
     dbg(`longpress-arm: abgebrochen (isPreciseMousePointer=${isPreciseMousePointer(e)}, button=${e.button})`);
     return;
@@ -571,6 +580,7 @@ document.addEventListener('pointerdown', (e) => {
   }
 
   dbg(`longpress-arm: Timer gestartet für button=${e.button} (target=${e.target.tagName}.${e.target.className})`);
+  longPressArmed = true;
   longPressFired = false;
   longPressButton = e.button;
   longPressTimer = setTimeout(() => {
@@ -581,74 +591,40 @@ document.addEventListener('pointerdown', (e) => {
   }, LONG_PRESS_MS);
 });
 
+// Die eigentliche Kurzklick-Zählung passiert HIER, nicht in "click"/
+// "contextmenu": pointerup markiert zuverlässig den Moment des Loslassens,
+// unabhängig davon, ob/wann das jeweilige Gerät zusätzlich ein "click"- oder
+// "contextmenu"-Event feuert.
 document.addEventListener('pointerup', (e) => {
-  dbg(`pointerup type=${e.pointerType} button=${e.button} (Timer aktiv: ${!!longPressTimer})`);
+  dbg(`pointerup type=${e.pointerType} button=${e.button} armed=${longPressArmed} timerAktiv=${!!longPressTimer} fired=${longPressFired}`);
+  const timerWarNochAktiv = !!longPressTimer;
   clearLongPressTimer();
+
+  if (longPressFired) {
+    longPressFired = false;
+    return; // Long-Press hat schon abgezogen — hier nichts weiter tun.
+  }
+  if (!longPressArmed || !timerWarNochAktiv) return; // War kein von uns verwalteter Score-Press.
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  const scorer = e.button === 0 ? 'A' : 'B';
+  dbg(`pointerup: scorePoint(${scorer}) [Kurzklick]`);
+  scorePoint(scorer);
 });
+
 document.addEventListener('pointerleave', clearLongPressTimer, true);
 document.addEventListener('pointercancel', clearLongPressTimer);
 
-// Klicks auf andere Buttons (Undo, Match abbrechen/speichern, "Weiter" beim
-// Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen Punkt geben —
-// nur echte Klicks auf freie Fläche oder direkt auf die Score-Buttons zählen
-// hier mit.
-function isOtherControl(target) {
-  const control = target.closest('button, a, input, select, textarea');
-  return control && control !== el.btnA && control !== el.btnB;
-}
-
+// Nur noch fürs Unterdrücken des nativen Kontextmenüs bzw. als Sicherheitsnetz
+// falls doch mal ein "click" ohne zugehöriges pointerup-Paar durchkäme —
+// zählt selbst nichts mehr.
 document.addEventListener('click', (e) => {
-  dbg(`click target=${e.target.tagName}.${e.target.className} lastPointerWasMouse=${lastPointerWasMouse} longPressFired=${longPressFired}`);
-  if (!lastPointerWasMouse) return;
-  if (longPressFired) {
-    longPressFired = false;
-    return;
-  }
-  // Falls "click" (z.B. auf manchen Geräten/Gesten) vor dem regulären
-  // pointerup-Handler feuert, muss der noch laufende Long-Press-Timer hier
-  // ebenfalls gestoppt werden — sonst zieht er den gerade erst gezählten
-  // Punkt Sekundenbruchteile später wieder ab (siehe contextmenu unten,
-  // wo genau das auf dem iPad beobachtet wurde).
-  clearLongPressTimer();
-  if (!el.views.live.classList.contains('active')) {
-    dbg('click: abgebrochen (Live-Ansicht nicht aktiv)');
-    return;
-  }
-  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-    dbg('click: abgebrochen (Textfeld fokussiert)');
-    return;
-  }
-  if (isOtherControl(e.target)) {
-    dbg('click: abgebrochen (isOtherControl=true)');
-    return;
-  }
-  dbg('click: scorePoint(A)');
-  scorePoint('A');
+  dbg(`click target=${e.target.tagName}.${e.target.className} (nur Log, zählt nicht mehr selbst)`);
 });
 
 document.addEventListener('contextmenu', (e) => {
-  dbg(`contextmenu target=${e.target.tagName}.${e.target.className} longPressFired=${longPressFired}`);
-  if (!el.views.live.classList.contains('active')) {
-    dbg('contextmenu: abgebrochen (Live-Ansicht nicht aktiv)');
-    return;
-  }
+  if (!el.views.live.classList.contains('active')) return;
   e.preventDefault();
-  if (longPressFired) {
-    longPressFired = false;
-    return;
-  }
-  // Auf dem iPad feuert "contextmenu" offenbar unabhängig vom eigenen
-  // 500ms-Timer (eigene Halte-Erkennung des Trackpads) — ohne diesen
-  // Stopp würde der Punkt hier sofort gezählt, aber der noch laufende
-  // Timer ihn kurz danach automatisch wieder abziehen.
-  clearLongPressTimer();
-  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-  if (isOtherControl(e.target)) {
-    dbg('contextmenu: abgebrochen (isOtherControl=true)');
-    return;
-  }
-  dbg('contextmenu: scorePoint(B)');
-  scorePoint('B');
 });
 
 // Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
