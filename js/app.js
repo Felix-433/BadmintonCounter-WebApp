@@ -604,6 +604,12 @@ document.addEventListener('click', (e) => {
     longPressFired = false;
     return;
   }
+  // Falls "click" (z.B. auf manchen Geräten/Gesten) vor dem regulären
+  // pointerup-Handler feuert, muss der noch laufende Long-Press-Timer hier
+  // ebenfalls gestoppt werden — sonst zieht er den gerade erst gezählten
+  // Punkt Sekundenbruchteile später wieder ab (siehe contextmenu unten,
+  // wo genau das auf dem iPad beobachtet wurde).
+  clearLongPressTimer();
   if (!el.views.live.classList.contains('active')) {
     dbg('click: abgebrochen (Live-Ansicht nicht aktiv)');
     return;
@@ -631,6 +637,11 @@ document.addEventListener('contextmenu', (e) => {
     longPressFired = false;
     return;
   }
+  // Auf dem iPad feuert "contextmenu" offenbar unabhängig vom eigenen
+  // 500ms-Timer (eigene Halte-Erkennung des Trackpads) — ohne diesen
+  // Stopp würde der Punkt hier sofort gezählt, aber der noch laufende
+  // Timer ihn kurz danach automatisch wieder abziehen.
+  clearLongPressTimer();
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
   if (isOtherControl(e.target)) {
     dbg('contextmenu: abgebrochen (isOtherControl=true)');
