@@ -87,7 +87,12 @@ Während des Live-Scorings reagiert die App zusätzlich auf Mausklicks —
 | --------------------------- | -------- |
 | Linksklick                  | Punkt für Team A |
 | Rechtsklick                 | Punkt für Team B (Kontextmenü wird unterdrückt) |
-| Linke Taste gedrückt halten (≥ 0,5s) | Letzten Punkt zurückziehen (wie Undo-Button) |
+| Linke Taste gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team A** zurückziehen |
+| Rechte Taste gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team B** zurückziehen |
+
+Jede Taste "gehört" also komplett ihrer Seite: Klick zählt, Halten korrigiert
+— unabhängig davon, wer zuletzt gepunktet hat. Für ein generisches Undo
+(letzter Punkt egal von wem) bleibt der **↶ Undo**-Button.
 
 Nur bei echter Maus (auch eine per Bluetooth verbundene Maus/Trackpad an
 einem iPad wird erkannt) — Finger-Tap auf einem Touchscreen bleibt normales

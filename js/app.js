@@ -250,6 +250,17 @@ function undoPoint() {
   renderLive();
 }
 
+// Zieht gezielt den letzten Punkt einer bestimmten Seite zurück (nicht
+// zwingend den letzten Punkt insgesamt) — für die Maus-Fernbedienung:
+// linke/rechte Taste halten korrigiert nur die eigene Seite.
+function removeLastPointFromSide(side) {
+  const idx = match.history.lastIndexOf(side);
+  if (idx === -1) return;
+  match.history.splice(idx, 1);
+  persistMatch();
+  renderLive();
+}
+
 function cancelMatch() {
   if (!confirm('Laufendes Match wirklich abbrechen? Der Fortschritt geht verloren.')) return;
   match = null;
@@ -489,14 +500,15 @@ document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
-// Maus: linke Taste lange halten zieht den letzten Punkt zurück (Kurzform
-// für den Undo-Button, ohne die Maus dorthin bewegen zu müssen). Nur bei
-// echter Maus (isPreciseMousePointer) und nur linke Taste — rechte Taste
-// löst bereits sofort per "contextmenu" einen Punkt für B aus, ein
-// "Halten" ergibt dort keinen Sinn. longPressFired unterdrückt danach den
-// normalen Klick (der sonst zusätzlich einen Punkt für A geben würde).
+// Maus: Taste lange halten zieht der jeweils eigenen Seite gezielt den
+// letzten Punkt zurück (links = A, rechts = B) — symmetrisch zum
+// Klick-Schema (links = +1 A, rechts = +1 B). Nur bei echter Maus
+// (isPreciseMousePointer). longPressFired unterdrückt danach das
+// nachfolgende "click"- bzw. "contextmenu"-Event, das sonst zusätzlich
+// einen Punkt geben würde.
 const LONG_PRESS_MS = 500;
 let longPressTimer = null;
+let longPressButton = null; // 0 = links (A), 2 = rechts (B)
 let longPressFired = false;
 
 function clearLongPressTimer() {
@@ -507,14 +519,15 @@ function clearLongPressTimer() {
 }
 
 document.addEventListener('pointerdown', (e) => {
-  if (!isPreciseMousePointer(e) || e.button !== 0) return;
+  if (!isPreciseMousePointer(e) || (e.button !== 0 && e.button !== 2)) return;
   if (!el.views.live.classList.contains('active')) return;
   if (isOtherControl(e.target)) return;
 
   longPressFired = false;
+  longPressButton = e.button;
   longPressTimer = setTimeout(() => {
     longPressFired = true;
-    undoPoint();
+    removeLastPointFromSide(longPressButton === 0 ? 'A' : 'B');
     longPressTimer = null;
   }, LONG_PRESS_MS);
 });
@@ -547,6 +560,10 @@ document.addEventListener('click', (e) => {
 document.addEventListener('contextmenu', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   e.preventDefault();
+  if (longPressFired) {
+    longPressFired = false;
+    return;
+  }
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
   if (isOtherControl(e.target)) return;
   scorePoint('B');
