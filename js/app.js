@@ -489,6 +489,40 @@ document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
+// Maus: linke Taste lange halten zieht den letzten Punkt zurück (Kurzform
+// für den Undo-Button, ohne die Maus dorthin bewegen zu müssen). Nur bei
+// echter Maus (isPreciseMousePointer) und nur linke Taste — rechte Taste
+// löst bereits sofort per "contextmenu" einen Punkt für B aus, ein
+// "Halten" ergibt dort keinen Sinn. longPressFired unterdrückt danach den
+// normalen Klick (der sonst zusätzlich einen Punkt für A geben würde).
+const LONG_PRESS_MS = 500;
+let longPressTimer = null;
+let longPressFired = false;
+
+function clearLongPressTimer() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (!isPreciseMousePointer(e) || e.button !== 0) return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (isOtherControl(e.target)) return;
+
+  longPressFired = false;
+  longPressTimer = setTimeout(() => {
+    longPressFired = true;
+    undoPoint();
+    longPressTimer = null;
+  }, LONG_PRESS_MS);
+});
+
+document.addEventListener('pointerup', clearLongPressTimer);
+document.addEventListener('pointerleave', clearLongPressTimer, true);
+document.addEventListener('pointercancel', clearLongPressTimer);
+
 // Klicks auf andere Buttons (Undo, Match abbrechen/speichern, "Weiter" beim
 // Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen Punkt geben —
 // nur echte Klicks auf freie Fläche oder direkt auf die Score-Buttons zählen
@@ -500,6 +534,10 @@ function isOtherControl(target) {
 
 document.addEventListener('click', (e) => {
   if (!lastPointerWasMouse) return;
+  if (longPressFired) {
+    longPressFired = false;
+    return;
+  }
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
   if (isOtherControl(e.target)) return;

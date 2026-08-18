@@ -78,6 +78,21 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
 aktiv ist.
 
+## Fernbedienung (Maus)
+
+Während des Live-Scorings reagiert die App zusätzlich auf Mausklicks —
+überall im Live-Bildschirm, nicht nur auf den Score-Buttons:
+
+| Aktion                     | Ergebnis |
+| --------------------------- | -------- |
+| Linksklick                  | Punkt für Team A |
+| Rechtsklick                 | Punkt für Team B (Kontextmenü wird unterdrückt) |
+| Linke Taste gedrückt halten (≥ 0,5s) | Letzten Punkt zurückziehen (wie Undo-Button) |
+
+Nur bei echter Maus (auch eine per Bluetooth verbundene Maus/Trackpad an
+einem iPad wird erkannt) — Finger-Tap auf einem Touchscreen bleibt normales
+Antippen der Score-Buttons.
+
 ## Icons
 
 Die PWA-Icons unter `icons/` sind einfarbige Platzhalter, erzeugt durch:
