@@ -355,11 +355,38 @@ el.setupForm.addEventListener('submit', (e) => {
   updateMatchTypeUI();
 });
 
-el.btnA.addEventListener('click', () => scorePoint('A'));
-el.btnB.addEventListener('click', () => scorePoint('B'));
+// Merkt sich, ob die letzte Zeigereingabe von einer echten Maus stammte.
+// Wird gebraucht, damit die Button-Klick-Handler unten bei Mausklicks nicht
+// zusätzlich zur globalen Maustasten-Fernbedienung feuern (keine Doppelzählung),
+// Touch/Tap auf den Buttons (z.B. iPad) aber unverändert funktioniert.
+let lastPointerType = 'touch';
+
+el.btnA.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('A'); });
+el.btnB.addEventListener('click', () => { if (lastPointerType === 'mouse') return; scorePoint('B'); });
 el.btnUndo.addEventListener('click', undoPoint);
 el.btnCancel.addEventListener('click', cancelMatch);
 el.btnSave.addEventListener('click', saveMatch);
+
+// Bluetooth-Maus als Fernbedienung: linke Maustaste = Punkt Team A, rechte
+// Maustaste = Punkt Team B, überall im Live-Scoring-Bildschirm (nicht nur auf
+// den Buttons). Über pointerType von Touch-Eingaben unterschieden, damit
+// Antippen der Buttons auf Touchgeräten nicht versehentlich mitzählt.
+document.addEventListener('pointerdown', (e) => {
+  lastPointerType = e.pointerType;
+  if (e.pointerType !== 'mouse') return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  if (e.button === 0) {
+    scorePoint('A');
+  } else if (e.button === 2) {
+    scorePoint('B');
+  }
+}, true);
+
+document.addEventListener('contextmenu', (e) => {
+  if (el.views.live.classList.contains('active')) e.preventDefault();
+});
 
 // Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
 // normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
