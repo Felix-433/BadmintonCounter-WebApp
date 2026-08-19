@@ -600,11 +600,12 @@ function arrowKeySide(key) {
 }
 
 const KEY_LONG_PRESS_MS = 500;
-// Grosszügig bemessen: BLE-Übertragung + Reaktionszeit beim bewussten
-// Doppel-Tippen summieren sich leicht auf mehrere hundert ms. Ein echter
-// Ballwechsel zwischen zwei realen Punkten dauert immer mehrere Sekunden,
-// daher ist auch 1s hier noch sicher vor Fehlauslösern.
-const DOUBLE_PRESS_MS = 1000;
+// Kompromisswert: 400ms war zu eng (bewusster Doppel-Druck inkl.
+// BLE-Latenz hat das Fenster nicht sicher getroffen), 1000ms war zu
+// weit (hat echte, schnell aufeinanderfolgende einzelne Punkte
+// fälschlich als Korrektur gewertet). 600ms als Mitte, ggf. weiter
+// nachjustieren.
+const DOUBLE_PRESS_MS = 600;
 let keyLongPressTimer = null;
 let keyLongPressSide = null;
 let keyLongPressFired = false;

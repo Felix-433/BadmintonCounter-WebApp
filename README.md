@@ -73,8 +73,8 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | ------------------------ | -------- |
 | `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
 | `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
-| `←` / `Bild ↑` zweimal hintereinander (< 1s) | Letzten Punkt **von Team A** zurückziehen |
-| `→` / `Bild ↓` zweimal hintereinander (< 1s) | Letzten Punkt **von Team B** zurückziehen |
+| `←` / `Bild ↑` zweimal hintereinander (< 0,6s) | Letzten Punkt **von Team A** zurückziehen |
+| `→` / `Bild ↓` zweimal hintereinander (< 0,6s) | Letzten Punkt **von Team B** zurückziehen |
 | `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
 | `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
 | `Rücktaste` / `Tab`       | Undo (letzter Punkt, egal von wem) |
@@ -87,12 +87,12 @@ dann nicht, der Doppel-Druck aber schon (braucht nur zwei normale
 Tastendrücke). Der Doppel-Druck zieht dabei sowohl den durch den ersten
 Druck selbst gezählten Punkt als auch den eigentlich gewollten Punkt ab —
 am Ende steht der Punktestand also einen niedriger als **vor** dem ersten
-der beiden Drücke, nicht nur unverändert. Das Zeitfenster ist mit 1s
-großzügig bemessen (Bluetooth-Latenz + Reaktionszeit); ein Ballwechsel
-zwischen zwei echten Punkten dauert immer mehrere Sekunden, versehentliches
-Auslösen ist praktisch
-ausgeschlossen. Funktioniert nur, solange kein Textfeld fokussiert ist und
-die Live-Ansicht aktiv ist.
+der beiden Drücke, nicht nur unverändert. Das Zeitfenster (0,6s) ist ein
+Kompromisswert: zu eng, und ein bewusster Doppel-Druck (inkl.
+Bluetooth-Latenz) trifft es nicht sicher; zu weit, und echte, schnell
+aufeinanderfolgende einzelne Punkte werden fälschlich als Korrektur
+gewertet — je nach Spieltempo ggf. weiter nachjustieren. Funktioniert nur,
+solange kein Textfeld fokussiert ist und die Live-Ansicht aktiv ist.
 
 `Enter` ist bewusst komplett deaktiviert: Browser aktivieren beim
 Enter-Druck das zuletzt fokussierte Element neu — z.B. einen gerade
