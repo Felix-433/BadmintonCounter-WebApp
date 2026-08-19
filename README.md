@@ -73,10 +73,17 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | ------------------------ | -------- |
 | `←` (Pfeil links) / `Bild ↑` | Punkt für Team A |
 | `→` (Pfeil rechts) / `Bild ↓` | Punkt für Team B |
-| `Rücktaste`               | Undo (letzter Punkt) |
+| `Rücktaste` / `Tab`       | Undo (letzter Punkt) |
 
 Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
 aktiv ist.
+
+Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
+sendet im Standardmodus bereits `ArrowLeft`/`ArrowRight` für seine beiden
+Haupttasten (funktioniert also direkt), die Tab-Taste dient als dritte
+Taste zum Abziehen. Enter sowie gehaltenes Tab/Enter (Alt+Tab/Alt+F4) sind
+bewusst nicht belegt — Alt+F4 würde z.B. das Fenster schließen und wird
+ohnehin vom Betriebssystem abgefangen, bevor die Seite es sieht.
 
 ## Fernbedienung (Maus)
 

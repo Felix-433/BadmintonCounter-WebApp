@@ -572,6 +572,14 @@ document.addEventListener('contextmenu', (e) => {
 // normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
 // (je nach Modell). Nur aktiv während des Live-Scorings, und nicht während
 // in ein Textfeld getippt wird.
+//
+// Der Norwii N95 Plus (BLE-Presenter) sendet im Standardmodus genau
+// ArrowLeft/ArrowRight für seine beiden Haupttasten — funktioniert also
+// bereits ohne Zusatzcode. Für "Abziehen" nutzen wir dessen Tab-Taste
+// (kurzer Druck) als weitere Undo-Taste neben Backspace: Enter/gehaltenes
+// Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) binden wir bewusst nicht,
+// da Alt+F4 z.B. das Fenster schließen würde und diese Kombis ohnehin auf
+// OS-Ebene abgefangen werden, bevor sie die Seite erreichen.
 document.addEventListener('keydown', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
@@ -588,6 +596,7 @@ document.addEventListener('keydown', (e) => {
       scorePoint('B');
       break;
     case 'Backspace':
+    case 'Tab':
       e.preventDefault();
       undoPoint();
       break;
