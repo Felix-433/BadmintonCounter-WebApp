@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasten-Debug</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0e1b30; color: #f2f5fa; margin: 0; padding: 1rem; }
+  h1 { font-size: 1.1rem; }
+  button { font-size: 1rem; padding: 0.5rem 1rem; margin-bottom: 1rem; }
+  #log { font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; }
+  .entry { border-bottom: 1px solid #1b3760; padding: 0.4rem 0; }
+  .entry b { color: #ffb703; }
+  .down { color: #7ee787; }
+  .up { color: #79c0ff; }
+</style>
+</head>
+<body>
+<h1>Tasten-Debug — hier klicken, dann Norwii-Tasten drücken (kurz &amp; lang)</h1>
+<div tabindex="0" id="target" style="outline:none;background:#1b3760;border:2px dashed #ffb703;border-radius:1rem;padding:1.5rem;text-align:center;margin-bottom:1rem;">
+  Hier klicken, damit die Seite Tastatur-Fokus hat
+</div>
+<button id="clear">Log leeren</button>
+<div id="log"></div>
+<script>
+const log = document.getElementById('log');
+document.getElementById('clear').addEventListener('click', () => { log.textContent = ''; });
+document.getElementById('target').focus();
+
+function record(type, e) {
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<b class="${type === 'keydown' ? 'down' : 'up'}">${type}</b> @ ${new Date().toLocaleTimeString('de-DE')}  key="${e.key}" code="${e.code}" repeat=${e.repeat} shift=${e.shiftKey} ctrl=${e.ctrlKey} alt=${e.altKey}`;
+  log.prepend(div);
+}
+
+document.addEventListener('keydown', (e) => { record('keydown', e); });
+document.addEventListener('keyup', (e) => { record('keyup', e); });
+</script>
+</body>
+</html>
