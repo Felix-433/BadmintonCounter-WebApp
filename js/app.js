@@ -575,16 +575,24 @@ document.addEventListener('contextmenu', (e) => {
 //
 // Der Norwii N95 Plus (BLE-Presenter) sendet im Standardmodus genau
 // ArrowLeft/ArrowRight für seine beiden Haupttasten — funktioniert also
-// bereits ohne Zusatzcode. Für "Abziehen" gibt es zwei Wege: Tab (kurzer
-// Druck) als weitere Undo-Taste neben Backspace, UND — analog zur
-// Maus-Fernbedienung — die jeweilige Pfeiltaste lange halten zieht gezielt
-// den letzten Punkt der eigenen Seite ab. Enter ist komplett deaktiviert
-// (preventDefault, keine Aktion): sonst aktiviert Enter das zuletzt
-// fokussierte Element neu — z.B. einen gerade angeklickten Score-Button —
-// und gibt so ungewollt einen zusätzlichen Punkt. Gehaltenes Tab/Enter
-// (Alt+Tab/Alt+F4) binden wir bewusst nicht, da Alt+F4 z.B. das Fenster
-// schließen würde und diese Kombis ohnehin auf OS-Ebene abgefangen werden,
-// bevor sie die Seite erreichen.
+// bereits ohne Zusatzcode. Für "Abziehen" gibt es drei Wege: Tab (kurzer
+// Druck) als weitere generische Undo-Taste neben Backspace, die jeweilige
+// Pfeiltaste lange halten (funktioniert nur bei Geräten mit echtem
+// Tasten-Auto-Repeat, z.B. einer richtigen Tastatur), UND zweimal schnell
+// hintereinander drücken (< DOUBLE_PRESS_MS) — das braucht kein echtes
+// Halten und funktioniert deshalb auch mit einfachen BLE-Presentern wie
+// dem Norwii, die pro Knopfdruck nur ein einzelnes, sofortiges
+// Tastensignal senden statt eines über die Zeit gehaltenen. Ein
+// versehentliches Doppel-Auslösen durch zwei echte, schnell
+// aufeinanderfolgende Spielpunkte ist praktisch ausgeschlossen — ein
+// Ballwechsel dauert immer deutlich länger als 400ms.
+//
+// Enter ist komplett deaktiviert (preventDefault, keine Aktion): sonst
+// aktiviert Enter das zuletzt fokussierte Element neu — z.B. einen gerade
+// angeklickten Score-Button — und gibt so ungewollt einen zusätzlichen
+// Punkt. Gehaltenes Tab/Enter (Alt+Tab/Alt+F4) binden wir bewusst nicht,
+// da Alt+F4 z.B. das Fenster schließen würde und diese Kombis ohnehin auf
+// OS-Ebene abgefangen werden, bevor sie die Seite erreichen.
 function arrowKeySide(key) {
   if (key === 'ArrowLeft' || key === 'PageUp') return 'A';
   if (key === 'ArrowRight' || key === 'PageDown') return 'B';
@@ -592,9 +600,12 @@ function arrowKeySide(key) {
 }
 
 const KEY_LONG_PRESS_MS = 500;
+const DOUBLE_PRESS_MS = 400;
 let keyLongPressTimer = null;
 let keyLongPressSide = null;
 let keyLongPressFired = false;
+let lastScoredAt = { A: 0, B: 0 };
+let suppressNextKeyup = null; // Seite, deren nächstes keyup ignoriert werden soll
 
 function clearKeyLongPressTimer() {
   if (keyLongPressTimer) {
@@ -612,6 +623,18 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (e.repeat) return; // Auto-Wiederholung des Betriebssystems beim Halten ignorieren.
     clearKeyLongPressTimer();
+
+    if (Date.now() - lastScoredAt[side] <= DOUBLE_PRESS_MS) {
+      // Doppel-Druck: zweiter Tastendruck kurz nach einem bereits
+      // gezählten Punkt derselben Seite -> als Abziehen werten statt
+      // als weiteren Punkt. Das zugehörige keyup wird unterdrückt, sonst
+      // würde es (mangels Timer) sofort nochmal scorePoint() auslösen.
+      removeLastPointFromSide(side);
+      lastScoredAt[side] = 0;
+      suppressNextKeyup = side;
+      return;
+    }
+
     keyLongPressFired = false;
     keyLongPressSide = side;
     keyLongPressTimer = setTimeout(() => {
@@ -637,13 +660,18 @@ document.addEventListener('keydown', (e) => {
 
 // Kurzdruck-Zählung passiert hier beim Loslassen (keyup), nicht direkt bei
 // keydown — sonst gäbe es bei jedem Tastendruck sofort einen Punkt, noch
-// bevor feststeht, ob es ein langes Halten wird.
+// bevor feststeht, ob es ein langes Halten oder ein Doppel-Druck wird.
 document.addEventListener('keyup', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
   const side = arrowKeySide(e.key);
   if (!side) return;
+
+  if (suppressNextKeyup === side) {
+    suppressNextKeyup = null;
+    return;
+  }
 
   const timerWarNochAktiv = !!keyLongPressTimer;
   clearKeyLongPressTimer();
@@ -654,6 +682,7 @@ document.addEventListener('keyup', (e) => {
   }
   if (!timerWarNochAktiv || keyLongPressSide !== side) return;
   scorePoint(side);
+  lastScoredAt[side] = Date.now();
 });
 
 el.nav.addEventListener('click', (e) => {

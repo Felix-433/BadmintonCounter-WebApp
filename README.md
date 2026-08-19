@@ -73,14 +73,21 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | ------------------------ | -------- |
 | `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
 | `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
-| `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team A** zurückziehen |
-| `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team B** zurückziehen |
+| `←` / `Bild ↑` zweimal schnell hintereinander (< 0,4s) | Letzten Punkt **von Team A** zurückziehen |
+| `→` / `Bild ↓` zweimal schnell hintereinander (< 0,4s) | Letzten Punkt **von Team B** zurückziehen |
+| `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
+| `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
 | `Rücktaste` / `Tab`       | Undo (letzter Punkt, egal von wem) |
 | `Enter`                   | deaktiviert (siehe unten) |
 
-Genau wie bei der Maus-Fernbedienung: Klick/kurzer Tastendruck zählt, Halten
-korrigiert gezielt die eigene Seite. Funktioniert nur, solange kein Textfeld
-fokussiert ist und die Live-Ansicht aktiv ist.
+Zwei Wege zum gezielten Abziehen, weil viele einfache BLE-Presenter (z.B.
+der Norwii unten) pro Knopfdruck nur ein einzelnes, sofortiges Tastensignal
+senden statt eines über die Zeit gehaltenen — echtes "Halten" funktioniert
+dann nicht, der Doppel-Druck aber schon (braucht nur zwei normale
+Tastendrücke). Ein Ballwechsel dauert immer deutlich länger als 400ms,
+versehentliches Auslösen durch zwei echte schnelle Punkte ist praktisch
+ausgeschlossen. Funktioniert nur, solange kein Textfeld fokussiert ist und
+die Live-Ansicht aktiv ist.
 
 `Enter` ist bewusst komplett deaktiviert: Browser aktivieren beim
 Enter-Druck das zuletzt fokussierte Element neu — z.B. einen gerade
@@ -89,11 +96,12 @@ würde.
 
 Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
 sendet im Standardmodus bereits `ArrowLeft`/`ArrowRight` für seine beiden
-Haupttasten (funktioniert also direkt, inkl. Halten zum Abziehen), die
-Tab-Taste dient als dritte Taste fürs generische Undo. Gehaltenes Tab/Enter
-(Alt+Tab/Alt+F4) ist bewusst nicht belegt — Alt+F4 würde z.B. das Fenster
-schließen und wird ohnehin vom Betriebssystem abgefangen, bevor die Seite
-es sieht.
+Haupttasten (funktioniert also direkt) — echtes Halten wird vom Gerät
+nicht unterstützt (kein Auto-Repeat-Signal), Abziehen läuft dort über den
+Doppel-Druck. Die Tab-Taste dient als vierte Taste fürs generische Undo.
+Gehaltenes Tab/Enter (Alt+Tab/Alt+F4) ist bewusst nicht belegt — Alt+F4
+würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
+abgefangen, bevor die Seite es sieht.
 
 ## Fernbedienung (Maus)
 
