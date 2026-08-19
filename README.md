@@ -73,26 +73,22 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | ------------------------ | -------- |
 | `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
 | `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
-| `←` / `Bild ↑` zweimal hintereinander (< 0,6s) | Letzten Punkt **von Team A** zurückziehen |
-| `→` / `Bild ↓` zweimal hintereinander (< 0,6s) | Letzten Punkt **von Team B** zurückziehen |
+| `Tab` **gehalten** + `←`/`Bild ↑` | Letzten Punkt **von Team A** zurückziehen |
+| `Tab` **gehalten** + `→`/`Bild ↓` | Letzten Punkt **von Team B** zurückziehen |
 | `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
 | `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
-| `Rücktaste` / `Tab`       | Undo (letzter Punkt, egal von wem) |
+| `Rücktaste` / `Tab` kurz  | Undo (letzter Punkt, egal von wem) |
 | `Enter`                   | deaktiviert (siehe unten) |
 
-Zwei Wege zum gezielten Abziehen, weil viele einfache BLE-Presenter (z.B.
-der Norwii unten) pro Knopfdruck nur ein einzelnes, sofortiges Tastensignal
-senden statt eines über die Zeit gehaltenen — echtes "Halten" funktioniert
-dann nicht, der Doppel-Druck aber schon (braucht nur zwei normale
-Tastendrücke). Der Doppel-Druck zieht dabei sowohl den durch den ersten
-Druck selbst gezählten Punkt als auch den eigentlich gewollten Punkt ab —
-am Ende steht der Punktestand also einen niedriger als **vor** dem ersten
-der beiden Drücke, nicht nur unverändert. Das Zeitfenster (0,6s) ist ein
-Kompromisswert: zu eng, und ein bewusster Doppel-Druck (inkl.
-Bluetooth-Latenz) trifft es nicht sicher; zu weit, und echte, schnell
-aufeinanderfolgende einzelne Punkte werden fälschlich als Korrektur
-gewertet — je nach Spieltempo ggf. weiter nachjustieren. Funktioniert nur,
-solange kein Textfeld fokussiert ist und die Live-Ansicht aktiv ist.
+Für gezieltes Abziehen zwei verschiedene Tasten gleichzeitig halten
+(Tab + Pfeiltaste) statt Timing zu messen: einfache BLE-Presenter wie der
+Norwii unten senden pro Knopfdruck oft nur ein einzelnes, sofortiges
+Tastensignal statt eines über die Zeit gehaltenen — sowohl "eine Taste
+lange halten" als auch "eine Taste zweimal schnell drücken" scheiterten
+in der Praxis an Tastenprellen und Bluetooth-Latenz. Zwei Tasten
+gleichzeitig ist dagegen ein eindeutiges Signal ohne Zeitfenster-Ratespiel.
+Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
+aktiv ist.
 
 `Enter` ist bewusst komplett deaktiviert: Browser aktivieren beim
 Enter-Druck das zuletzt fokussierte Element neu — z.B. einen gerade
@@ -101,11 +97,11 @@ würde.
 
 Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
 sendet im Standardmodus bereits `ArrowLeft`/`ArrowRight` für seine beiden
-Haupttasten (funktioniert also direkt) — echtes Halten wird vom Gerät
-nicht unterstützt (kein Auto-Repeat-Signal), Abziehen läuft dort über den
-Doppel-Druck. Die Tab-Taste dient als vierte Taste fürs generische Undo.
-Gehaltenes Tab/Enter (Alt+Tab/Alt+F4) ist bewusst nicht belegt — Alt+F4
-würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
+Haupttasten (funktioniert also direkt) — echtes Halten wird vom Gerät nicht
+unterstützt (kein Auto-Repeat-Signal), gezieltes Abziehen läuft dort über
+Tab halten + Pfeiltaste, physisch mit zwei Fingern gut machbar. Gehaltenes
+Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) sind bewusst nicht belegt —
+Alt+F4 würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
 abgefangen, bevor die Seite es sieht.
 
 ## Fernbedienung (Maus)
