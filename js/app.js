@@ -575,32 +575,85 @@ document.addEventListener('contextmenu', (e) => {
 //
 // Der Norwii N95 Plus (BLE-Presenter) sendet im Standardmodus genau
 // ArrowLeft/ArrowRight für seine beiden Haupttasten — funktioniert also
-// bereits ohne Zusatzcode. Für "Abziehen" nutzen wir dessen Tab-Taste
-// (kurzer Druck) als weitere Undo-Taste neben Backspace: Enter/gehaltenes
-// Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) binden wir bewusst nicht,
-// da Alt+F4 z.B. das Fenster schließen würde und diese Kombis ohnehin auf
-// OS-Ebene abgefangen werden, bevor sie die Seite erreichen.
+// bereits ohne Zusatzcode. Für "Abziehen" gibt es zwei Wege: Tab (kurzer
+// Druck) als weitere Undo-Taste neben Backspace, UND — analog zur
+// Maus-Fernbedienung — die jeweilige Pfeiltaste lange halten zieht gezielt
+// den letzten Punkt der eigenen Seite ab. Enter ist komplett deaktiviert
+// (preventDefault, keine Aktion): sonst aktiviert Enter das zuletzt
+// fokussierte Element neu — z.B. einen gerade angeklickten Score-Button —
+// und gibt so ungewollt einen zusätzlichen Punkt. Gehaltenes Tab/Enter
+// (Alt+Tab/Alt+F4) binden wir bewusst nicht, da Alt+F4 z.B. das Fenster
+// schließen würde und diese Kombis ohnehin auf OS-Ebene abgefangen werden,
+// bevor sie die Seite erreichen.
+function arrowKeySide(key) {
+  if (key === 'ArrowLeft' || key === 'PageUp') return 'A';
+  if (key === 'ArrowRight' || key === 'PageDown') return 'B';
+  return null;
+}
+
+const KEY_LONG_PRESS_MS = 500;
+let keyLongPressTimer = null;
+let keyLongPressSide = null;
+let keyLongPressFired = false;
+
+function clearKeyLongPressTimer() {
+  if (keyLongPressTimer) {
+    clearTimeout(keyLongPressTimer);
+    keyLongPressTimer = null;
+  }
+}
+
 document.addEventListener('keydown', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
+  const side = arrowKeySide(e.key);
+  if (side) {
+    e.preventDefault();
+    if (e.repeat) return; // Auto-Wiederholung des Betriebssystems beim Halten ignorieren.
+    clearKeyLongPressTimer();
+    keyLongPressFired = false;
+    keyLongPressSide = side;
+    keyLongPressTimer = setTimeout(() => {
+      keyLongPressFired = true;
+      removeLastPointFromSide(side);
+      keyLongPressTimer = null;
+    }, KEY_LONG_PRESS_MS);
+    return;
+  }
+
   switch (e.key) {
-    case 'ArrowLeft':
-    case 'PageUp':
-      e.preventDefault();
-      scorePoint('A');
-      break;
-    case 'ArrowRight':
-    case 'PageDown':
-      e.preventDefault();
-      scorePoint('B');
-      break;
     case 'Backspace':
     case 'Tab':
       e.preventDefault();
+      if (e.repeat) return;
       undoPoint();
       break;
+    case 'Enter':
+      e.preventDefault();
+      break;
   }
+});
+
+// Kurzdruck-Zählung passiert hier beim Loslassen (keyup), nicht direkt bei
+// keydown — sonst gäbe es bei jedem Tastendruck sofort einen Punkt, noch
+// bevor feststeht, ob es ein langes Halten wird.
+document.addEventListener('keyup', (e) => {
+  if (!el.views.live.classList.contains('active')) return;
+  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  const side = arrowKeySide(e.key);
+  if (!side) return;
+
+  const timerWarNochAktiv = !!keyLongPressTimer;
+  clearKeyLongPressTimer();
+
+  if (keyLongPressFired) {
+    keyLongPressFired = false;
+    return; // Long-Press hat schon abgezogen — hier nichts weiter tun.
+  }
+  if (!timerWarNochAktiv || keyLongPressSide !== side) return;
+  scorePoint(side);
 });
 
 el.nav.addEventListener('click', (e) => {

@@ -71,19 +71,29 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 
 | Taste                    | Aktion   |
 | ------------------------ | -------- |
-| `←` (Pfeil links) / `Bild ↑` | Punkt für Team A |
-| `→` (Pfeil rechts) / `Bild ↓` | Punkt für Team B |
-| `Rücktaste` / `Tab`       | Undo (letzter Punkt) |
+| `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
+| `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
+| `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team A** zurückziehen |
+| `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | Letzten Punkt **von Team B** zurückziehen |
+| `Rücktaste` / `Tab`       | Undo (letzter Punkt, egal von wem) |
+| `Enter`                   | deaktiviert (siehe unten) |
 
-Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
-aktiv ist.
+Genau wie bei der Maus-Fernbedienung: Klick/kurzer Tastendruck zählt, Halten
+korrigiert gezielt die eigene Seite. Funktioniert nur, solange kein Textfeld
+fokussiert ist und die Live-Ansicht aktiv ist.
+
+`Enter` ist bewusst komplett deaktiviert: Browser aktivieren beim
+Enter-Druck das zuletzt fokussierte Element neu — z.B. einen gerade
+angeklickten Score-Button — was sonst einen ungewollten Zusatzpunkt geben
+würde.
 
 Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
 sendet im Standardmodus bereits `ArrowLeft`/`ArrowRight` für seine beiden
-Haupttasten (funktioniert also direkt), die Tab-Taste dient als dritte
-Taste zum Abziehen. Enter sowie gehaltenes Tab/Enter (Alt+Tab/Alt+F4) sind
-bewusst nicht belegt — Alt+F4 würde z.B. das Fenster schließen und wird
-ohnehin vom Betriebssystem abgefangen, bevor die Seite es sieht.
+Haupttasten (funktioniert also direkt, inkl. Halten zum Abziehen), die
+Tab-Taste dient als dritte Taste fürs generische Undo. Gehaltenes Tab/Enter
+(Alt+Tab/Alt+F4) ist bewusst nicht belegt — Alt+F4 würde z.B. das Fenster
+schließen und wird ohnehin vom Betriebssystem abgefangen, bevor die Seite
+es sieht.
 
 ## Fernbedienung (Maus)
 
