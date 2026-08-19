@@ -71,12 +71,12 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 
 | Taste                    | Aktion   |
 | ------------------------ | -------- |
-| `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
-| `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
-| `Tab` **gehalten** + `←`/`Bild ↑` | Letzten Punkt **von Team A** zurückziehen |
-| `Tab` **gehalten** + `→`/`Bild ↓` | Letzten Punkt **von Team B** zurückziehen |
-| `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
-| `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
+| `←`/`↑` (Pfeil links/hoch) / `Bild ↑` kurz | Punkt für Team A |
+| `→`/`↓` (Pfeil rechts/runter) / `Bild ↓` kurz | Punkt für Team B |
+| `Tab` **gehalten** + `←`/`↑`/`Bild ↑` | Letzten Punkt **von Team A** zurückziehen |
+| `Tab` **gehalten** + `→`/`↓`/`Bild ↓` | Letzten Punkt **von Team B** zurückziehen |
+| `←`/`↑` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
+| `→`/`↓` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
 | `Rücktaste` / `Tab` kurz  | Undo (letzter Punkt, egal von wem) |
 | `Enter`                   | deaktiviert (siehe unten) |
 
@@ -96,11 +96,14 @@ angeklickten Score-Button — was sonst einen ungewollten Zusatzpunkt geben
 würde.
 
 Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
-sendet im Standardmodus bereits `ArrowLeft`/`ArrowRight` für seine beiden
-Haupttasten (funktioniert also direkt) — echtes Halten wird vom Gerät nicht
-unterstützt (kein Auto-Repeat-Signal), gezieltes Abziehen läuft dort über
-Tab halten + Pfeiltaste, physisch mit zwei Fingern gut machbar. Gehaltenes
-Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) sind bewusst nicht belegt —
+sendet im Standardmodus `ArrowLeft`/`ArrowRight`, in einem der per
+gleichzeitigem Halten beider Haupttasten umschaltbaren Modi stattdessen
+`ArrowUp`/`ArrowDown` — die App erkennt beide Varianten. Echtes Halten wird
+vom Gerät in keinem Modus unterstützt (kein Auto-Repeat-Signal, keine
+unterschiedlichen Tastencodes für kurz/lang), gezieltes Abziehen läuft dort
+über Tab halten + Pfeiltaste, physisch mit zwei Fingern gut machbar.
+Gehaltenes Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) sind bewusst nicht
+belegt —
 Alt+F4 würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
 abgefangen, bevor die Seite es sieht.
 

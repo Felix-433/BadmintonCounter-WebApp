@@ -596,8 +596,13 @@ document.addEventListener('contextmenu', (e) => {
 // Kombis ohnehin auf OS-Ebene abgefangen werden, bevor sie die Seite
 // erreichen.
 function arrowKeySide(key) {
-  if (key === 'ArrowLeft' || key === 'PageUp') return 'A';
-  if (key === 'ArrowRight' || key === 'PageDown') return 'B';
+  // ArrowUp/ArrowDown zusätzlich zu ArrowLeft/ArrowRight: der Norwii kann
+  // per Halten beider Haupttasten zwischen mehreren Modi umgeschaltet
+  // werden (linke/rechte Taste sendet dann z.B. Auf/Ab statt Links/Rechts)
+  // — damit funktioniert die App unabhängig davon, welcher Modus gerade
+  // aktiv ist.
+  if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return 'A';
+  if (key === 'ArrowRight' || key === 'ArrowDown' || key === 'PageDown') return 'B';
   return null;
 }
 
