@@ -73,8 +73,8 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | ------------------------ | -------- |
 | `←` (Pfeil links) / `Bild ↑` kurz | Punkt für Team A |
 | `→` (Pfeil rechts) / `Bild ↓` kurz | Punkt für Team B |
-| `←` / `Bild ↑` zweimal schnell hintereinander (< 0,4s) | Letzten Punkt **von Team A** zurückziehen |
-| `→` / `Bild ↓` zweimal schnell hintereinander (< 0,4s) | Letzten Punkt **von Team B** zurückziehen |
+| `←` / `Bild ↑` zweimal hintereinander (< 1s) | Letzten Punkt **von Team A** zurückziehen |
+| `→` / `Bild ↓` zweimal hintereinander (< 1s) | Letzten Punkt **von Team B** zurückziehen |
 | `←` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
 | `→` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
 | `Rücktaste` / `Tab`       | Undo (letzter Punkt, egal von wem) |
@@ -84,8 +84,9 @@ Zwei Wege zum gezielten Abziehen, weil viele einfache BLE-Presenter (z.B.
 der Norwii unten) pro Knopfdruck nur ein einzelnes, sofortiges Tastensignal
 senden statt eines über die Zeit gehaltenen — echtes "Halten" funktioniert
 dann nicht, der Doppel-Druck aber schon (braucht nur zwei normale
-Tastendrücke). Ein Ballwechsel dauert immer deutlich länger als 400ms,
-versehentliches Auslösen durch zwei echte schnelle Punkte ist praktisch
+Tastendrücke). Das Zeitfenster ist mit 1s großzügig bemessen (Bluetooth-
+Latenz + Reaktionszeit); ein Ballwechsel zwischen zwei echten Punkten
+dauert immer mehrere Sekunden, versehentliches Auslösen ist praktisch
 ausgeschlossen. Funktioniert nur, solange kein Textfeld fokussiert ist und
 die Live-Ansicht aktiv ist.
 
