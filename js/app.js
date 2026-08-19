@@ -630,9 +630,14 @@ document.addEventListener('keydown', (e) => {
 
     if (Date.now() - lastScoredAt[side] <= DOUBLE_PRESS_MS) {
       // Doppel-Druck: zweiter Tastendruck kurz nach einem bereits
-      // gezählten Punkt derselben Seite -> als Abziehen werten statt
-      // als weiteren Punkt. Das zugehörige keyup wird unterdrückt, sonst
-      // würde es (mangels Timer) sofort nochmal scorePoint() auslösen.
+      // gezählten Punkt derselben Seite -> als Korrektur werten. Der
+      // erste Druck hatte bereits einen Punkt gezählt (Ausgangsstand N
+      // -> N+1); zweimal abziehen macht das rückgängig UND zieht
+      // zusätzlich den eigentlich gewollten Punkt ab, sodass am Ende
+      // N-1 steht statt nur wieder N (unverändert). Das zugehörige
+      // keyup wird unterdrückt, sonst würde es (mangels Timer) sofort
+      // nochmal scorePoint() auslösen.
+      removeLastPointFromSide(side);
       removeLastPointFromSide(side);
       lastScoredAt[side] = 0;
       suppressNextKeyup = side;

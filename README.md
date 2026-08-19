@@ -84,9 +84,13 @@ Zwei Wege zum gezielten Abziehen, weil viele einfache BLE-Presenter (z.B.
 der Norwii unten) pro Knopfdruck nur ein einzelnes, sofortiges Tastensignal
 senden statt eines über die Zeit gehaltenen — echtes "Halten" funktioniert
 dann nicht, der Doppel-Druck aber schon (braucht nur zwei normale
-Tastendrücke). Das Zeitfenster ist mit 1s großzügig bemessen (Bluetooth-
-Latenz + Reaktionszeit); ein Ballwechsel zwischen zwei echten Punkten
-dauert immer mehrere Sekunden, versehentliches Auslösen ist praktisch
+Tastendrücke). Der Doppel-Druck zieht dabei sowohl den durch den ersten
+Druck selbst gezählten Punkt als auch den eigentlich gewollten Punkt ab —
+am Ende steht der Punktestand also einen niedriger als **vor** dem ersten
+der beiden Drücke, nicht nur unverändert. Das Zeitfenster ist mit 1s
+großzügig bemessen (Bluetooth-Latenz + Reaktionszeit); ein Ballwechsel
+zwischen zwei echten Punkten dauert immer mehrere Sekunden, versehentliches
+Auslösen ist praktisch
 ausgeschlossen. Funktioniert nur, solange kein Textfeld fokussiert ist und
 die Live-Ansicht aktiv ist.
 
