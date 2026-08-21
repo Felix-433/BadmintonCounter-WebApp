@@ -77,8 +77,17 @@ Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 | `Tab` **gehalten** + `→`/`↓`/`Bild ↓` | Letzten Punkt **von Team B** zurückziehen |
 | `←`/`↑` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
 | `→`/`↓` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
+| `a`                       | Letzten Punkt **von Team A** zurückziehen |
+| `b`                       | Letzten Punkt **von Team B** zurückziehen |
 | `Rücktaste` / `Tab` kurz  | Undo (letzter Punkt, egal von wem) |
 | `Enter`                   | deaktiviert (siehe unten) |
+
+`a`/`b` sind für Presenter gedacht, die sich per Hersteller-Software (z.B.
+Logi Options+) so konfigurieren lassen, dass eine Taste bei kurzem Druck
+das normale Signal (Pfeiltaste) und bei **langem Halten** einen frei
+wählbaren Buchstaben sendet — die Hardware/Software unterscheidet kurz/lang
+dann selbst zuverlässig, kein Timing-Code in dieser App nötig. Mnemonic:
+`a` = Team A, `b` = Team B.
 
 Für gezieltes Abziehen zwei verschiedene Tasten gleichzeitig halten
 (Tab + Pfeiltaste) statt Timing zu messen: einfache BLE-Presenter wie der
@@ -106,6 +115,14 @@ Gehaltenes Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) sind bewusst nicht
 belegt —
 Alt+F4 würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
 abgefangen, bevor die Seite es sieht.
+
+Getestet außerdem mit einem **Logitech R500s**: die Vor-/Zurück-Tasten
+senden standardmäßig `ArrowRight`/`ArrowLeft`, die "gehalten"-Funktionen
+(laut Handbuch "Präsentation starten"/"Blank Screen") lassen sich über die
+Logi-Options+-Software auf eigene Tasten umlegen — konfiguriert auf `b`
+(Weiter gehalten) und `a` (Zurück gehalten), siehe Tabelle oben. Anders als
+beim Norwii unterscheidet die Software hier kurz/lang also tatsächlich
+zuverlässig auf Geräteebene.
 
 ## Fernbedienung (Maus)
 

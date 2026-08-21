@@ -660,6 +660,24 @@ document.addEventListener('keydown', (e) => {
     case 'Enter':
       e.preventDefault();
       break;
+    // Logitech R500s (und ähnliche Presenter mit Logi Options+ o.ä.): die
+    // "gehalten"-Funktion einer Taste lässt sich auf einen eigenen,
+    // simplen Buchstaben umbelegen — die Hardware/Software unterscheidet
+    // kurz/lang dann selbst und sendet zwei echt unterschiedliche
+    // Tastencodes, kein Timing-Ratespiel in dieser App mehr nötig.
+    // Mnemonic: a = Team A abziehen, b = Team B abziehen.
+    case 'a':
+    case 'A':
+      e.preventDefault();
+      if (e.repeat) return;
+      removeLastPointFromSide('A');
+      break;
+    case 'b':
+    case 'B':
+      e.preventDefault();
+      if (e.repeat) return;
+      removeLastPointFromSide('B');
+      break;
   }
 });
 
