@@ -69,60 +69,24 @@ Während des Live-Scorings reagiert die App auf Tastatur-Events, damit sich
 ein Bluetooth-Presenter-Clicker (meldet sich als normale Tastatur an) als
 Fernbedienung nutzen lässt, ohne das Handy anzufassen:
 
-| Taste                    | Aktion   |
-| ------------------------ | -------- |
-| `←`/`↑` (Pfeil links/hoch) / `Bild ↑` kurz | Punkt für Team A |
-| `→`/`↓` (Pfeil rechts/runter) / `Bild ↓` kurz | Punkt für Team B |
-| `Tab` **gehalten** + `←`/`↑`/`Bild ↑` | Letzten Punkt **von Team A** zurückziehen |
-| `Tab` **gehalten** + `→`/`↓`/`Bild ↓` | Letzten Punkt **von Team B** zurückziehen |
-| `←`/`↑` / `Bild ↑` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team A zurückziehen |
-| `→`/`↓` / `Bild ↓` gedrückt halten (≥ 0,5s) | ebenfalls: letzten Punkt von Team B zurückziehen |
-| `a`                       | Letzten Punkt **von Team A** zurückziehen |
-| `b`                       | Letzten Punkt **von Team B** zurückziehen |
-| `Rücktaste` / `Tab` kurz  | Undo (letzter Punkt, egal von wem) |
-| `Enter`                   | deaktiviert (siehe unten) |
+| Taste                        | Aktion |
+| ----------------------------- | ------ |
+| `←` (Pfeil links) / `Bild ↑`  | Punkt für Team A |
+| `→` (Pfeil rechts) / `Bild ↓` | Punkt für Team B |
+| `Rücktaste`                   | Undo (letzter Punkt, egal von wem) |
+| `Enter`                       | deaktiviert — Browser aktivieren beim Enter-Druck sonst das zuletzt fokussierte Element neu (z.B. einen gerade angeklickten Score-Button) und geben so ungewollt einen zusätzlichen Punkt |
 
-`a`/`b` sind für Presenter gedacht, die sich per Hersteller-Software (z.B.
-Logi Options+) so konfigurieren lassen, dass eine Taste bei kurzem Druck
-das normale Signal (Pfeiltaste) und bei **langem Halten** einen frei
-wählbaren Buchstaben sendet — die Hardware/Software unterscheidet kurz/lang
-dann selbst zuverlässig, kein Timing-Code in dieser App nötig. Mnemonic:
-`a` = Team A, `b` = Team B.
-
-Für gezieltes Abziehen zwei verschiedene Tasten gleichzeitig halten
-(Tab + Pfeiltaste) statt Timing zu messen: einfache BLE-Presenter wie der
-Norwii unten senden pro Knopfdruck oft nur ein einzelnes, sofortiges
-Tastensignal statt eines über die Zeit gehaltenen — sowohl "eine Taste
-lange halten" als auch "eine Taste zweimal schnell drücken" scheiterten
-in der Praxis an Tastenprellen und Bluetooth-Latenz. Zwei Tasten
-gleichzeitig ist dagegen ein eindeutiges Signal ohne Zeitfenster-Ratespiel.
 Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
 aktiv ist.
 
-`Enter` ist bewusst komplett deaktiviert: Browser aktivieren beim
-Enter-Druck das zuletzt fokussierte Element neu — z.B. einen gerade
-angeklickten Score-Button — was sonst einen ungewollten Zusatzpunkt geben
-würde.
-
-Getestet mit dem [Norwii N95 Plus](https://www.norwii.com/manualen/902-en.html):
-sendet im Standardmodus `ArrowLeft`/`ArrowRight`, in einem der per
-gleichzeitigem Halten beider Haupttasten umschaltbaren Modi stattdessen
-`ArrowUp`/`ArrowDown` — die App erkennt beide Varianten. Echtes Halten wird
-vom Gerät in keinem Modus unterstützt (kein Auto-Repeat-Signal, keine
-unterschiedlichen Tastencodes für kurz/lang), gezieltes Abziehen läuft dort
-über Tab halten + Pfeiltaste, physisch mit zwei Fingern gut machbar.
-Gehaltenes Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) sind bewusst nicht
-belegt —
-Alt+F4 würde z.B. das Fenster schließen und wird ohnehin vom Betriebssystem
-abgefangen, bevor die Seite es sieht.
-
-Getestet außerdem mit einem **Logitech R500s**: die Vor-/Zurück-Tasten
-senden standardmäßig `ArrowRight`/`ArrowLeft`, die "gehalten"-Funktionen
-(laut Handbuch "Präsentation starten"/"Blank Screen") lassen sich über die
-Logi-Options+-Software auf eigene Tasten umlegen — konfiguriert auf `b`
-(Weiter gehalten) und `a` (Zurück gehalten), siehe Tabelle oben. Anders als
-beim Norwii unterscheidet die Software hier kurz/lang also tatsächlich
-zuverlässig auf Geräteebene.
+Ein **seitenspezifisches Abziehen per Presenter-Taste** (analog zur
+Maus-Fernbedienung unten) wurde ausführlich mit zwei Geräten (Norwii N95
+Plus, Logitech R500s) durchprobiert — Halten einer Taste, Doppel-Druck,
+Tab-Kombi, Umbelegung auf eigene Tasten per Logi-Options+-Software — und
+letztlich als auf dem iPad nicht praktikabel verworfen: beide Geräte
+liefern dort beim Halten kein browserseitig sichtbares Signal. Für
+gezieltes Abziehen auf dem iPad stattdessen die **Maus-Fernbedienung**
+nutzen (funktioniert dort bereits zuverlässig) oder den **↶ Undo**-Button.
 
 ## Fernbedienung (Maus)
 

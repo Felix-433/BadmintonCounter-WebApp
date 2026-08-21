@@ -573,51 +573,23 @@ document.addEventListener('contextmenu', (e) => {
 // (je nach Modell). Nur aktiv während des Live-Scorings, und nicht während
 // in ein Textfeld getippt wird.
 //
-// Der Norwii N95 Plus (BLE-Presenter) sendet im Standardmodus genau
-// ArrowLeft/ArrowRight für seine beiden Haupttasten — funktioniert also
-// bereits ohne Zusatzcode. Für "Abziehen" gibt es zwei Wege:
-//   - Tab kurz drücken: generisches Undo (letzter Punkt, egal von wem).
-//   - Tab HALTEN + gleichzeitig eine Pfeiltaste drücken: zieht gezielt
-//     einen Punkt der jeweiligen Seite ab. Zwei verschiedene, gleichzeitig
-//     gehaltene Tasten sind ein eindeutiges, robustes Signal — anders als
-//     Timing-basierte Ansätze (Halten einer einzelnen Taste, oder
-//     Doppel-Druck derselben Taste), die an echtem Tasten-Prellen von
-//     günstigen BLE-Presentern und BLE-Latenz gescheitert sind.
-//   - Die jeweilige Pfeiltaste lange halten funktioniert zusätzlich bei
-//     Geräten mit echtem Tasten-Auto-Repeat (z.B. einer richtigen
-//     Tastatur) — beim Norwii selbst wirkungslos, da der kein echtes
-//     Halten-Signal sendet, aber harmlos.
+// Seitenspezifisches Abziehen per Presenter-Taste (Halten, Doppel-Druck,
+// Tab-Kombi, Umbelegung auf eigene Tasten) wurde ausführlich mit zwei
+// Geräten (Norwii N95 Plus, Logitech R500s) auf dem iPad durchprobiert und
+// als nicht praktikabel verworfen — beide senden dort beim Halten kein
+// browserseitig sichtbares Signal (die Logitech-Umbelegung läuft nur über
+// die Logi-Options+-Software auf einem PC, die es für iPadOS nicht gibt).
+// Für seitenspezifisches Abziehen auf dem iPad stattdessen die
+// Maus-Fernbedienung nutzen (siehe unten) oder den ↶ Undo-Button.
 //
 // Enter ist komplett deaktiviert (preventDefault, keine Aktion): sonst
 // aktiviert Enter das zuletzt fokussierte Element neu — z.B. einen gerade
 // angeklickten Score-Button — und gibt so ungewollt einen zusätzlichen
-// Punkt. Gehaltenes Tab (Alt+Tab) und gehaltenes Enter (Alt+F4) binden wir
-// bewusst nicht, da Alt+F4 z.B. das Fenster schließen würde und diese
-// Kombis ohnehin auf OS-Ebene abgefangen werden, bevor sie die Seite
-// erreichen.
+// Punkt.
 function arrowKeySide(key) {
-  // ArrowUp/ArrowDown zusätzlich zu ArrowLeft/ArrowRight: der Norwii kann
-  // per Halten beider Haupttasten zwischen mehreren Modi umgeschaltet
-  // werden (linke/rechte Taste sendet dann z.B. Auf/Ab statt Links/Rechts)
-  // — damit funktioniert die App unabhängig davon, welcher Modus gerade
-  // aktiv ist.
-  if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return 'A';
-  if (key === 'ArrowRight' || key === 'ArrowDown' || key === 'PageDown') return 'B';
+  if (key === 'ArrowLeft' || key === 'PageUp') return 'A';
+  if (key === 'ArrowRight' || key === 'PageDown') return 'B';
   return null;
-}
-
-const KEY_LONG_PRESS_MS = 500;
-let keyLongPressTimer = null;
-let keyLongPressSide = null;
-let keyLongPressFired = false;
-let tabIsHeld = false;
-let tabComboUsed = false; // true, sobald Tab+Pfeiltaste in diesem Tab-Druck schon einen Punkt abgezogen hat
-
-function clearKeyLongPressTimer() {
-  if (keyLongPressTimer) {
-    clearTimeout(keyLongPressTimer);
-    keyLongPressTimer = null;
-  }
 }
 
 document.addEventListener('keydown', (e) => {
@@ -627,22 +599,8 @@ document.addEventListener('keydown', (e) => {
   const side = arrowKeySide(e.key);
   if (side) {
     e.preventDefault();
-    if (e.repeat) return; // Auto-Wiederholung des Betriebssystems beim Halten ignorieren.
-
-    if (tabIsHeld) {
-      removeLastPointFromSide(side);
-      tabComboUsed = true;
-      return;
-    }
-
-    clearKeyLongPressTimer();
-    keyLongPressFired = false;
-    keyLongPressSide = side;
-    keyLongPressTimer = setTimeout(() => {
-      keyLongPressFired = true;
-      removeLastPointFromSide(side);
-      keyLongPressTimer = null;
-    }, KEY_LONG_PRESS_MS);
+    if (e.repeat) return;
+    scorePoint(side);
     return;
   }
 
@@ -652,60 +610,10 @@ document.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       undoPoint();
       break;
-    case 'Tab':
-      e.preventDefault();
-      if (!e.repeat) tabComboUsed = false;
-      tabIsHeld = true;
-      break;
     case 'Enter':
       e.preventDefault();
       break;
-    // Logitech R500s (und ähnliche Presenter mit Logi Options+ o.ä.): die
-    // "gehalten"-Funktion einer Taste lässt sich auf einen eigenen,
-    // simplen Buchstaben umbelegen — die Hardware/Software unterscheidet
-    // kurz/lang dann selbst und sendet zwei echt unterschiedliche
-    // Tastencodes, kein Timing-Ratespiel in dieser App mehr nötig.
-    // Mnemonic: a = Team A abziehen, b = Team B abziehen.
-    case 'a':
-    case 'A':
-      e.preventDefault();
-      if (e.repeat) return;
-      removeLastPointFromSide('A');
-      break;
-    case 'b':
-    case 'B':
-      e.preventDefault();
-      if (e.repeat) return;
-      removeLastPointFromSide('B');
-      break;
   }
-});
-
-// Kurzdruck-Zählung passiert hier beim Loslassen (keyup), nicht direkt bei
-// keydown — sonst gäbe es bei jedem Tastendruck sofort einen Punkt, noch
-// bevor feststeht, ob es ein langes Halten wird.
-document.addEventListener('keyup', (e) => {
-  if (!el.views.live.classList.contains('active')) return;
-  if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-  if (e.key === 'Tab') {
-    tabIsHeld = false;
-    if (!tabComboUsed) undoPoint(); // Tab allein losgelassen, ohne Kombi -> generisches Undo.
-    return;
-  }
-
-  const side = arrowKeySide(e.key);
-  if (!side) return;
-
-  const timerWarNochAktiv = !!keyLongPressTimer;
-  clearKeyLongPressTimer();
-
-  if (keyLongPressFired) {
-    keyLongPressFired = false;
-    return; // Long-Press hat schon abgezogen — hier nichts weiter tun.
-  }
-  if (!timerWarNochAktiv || keyLongPressSide !== side) return;
-  scorePoint(side);
 });
 
 el.nav.addEventListener('click', (e) => {
