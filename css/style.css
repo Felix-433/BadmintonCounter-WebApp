@@ -278,6 +278,13 @@ button.primary {
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   padding: 0.2rem 0.6rem;
+  /* visibility statt display:none: der Platz bleibt reserviert, damit die
+     Punktzahl beim Aufschlagwechsel nicht die Position wechselt. */
+  visibility: hidden;
+}
+
+.serve-indicator.visible {
+  visibility: visible;
 }
 
 .score {

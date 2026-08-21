@@ -209,8 +209,8 @@ function renderLive() {
   const serverPlayerName = server ? currentServerPlayerName() : null;
   el.serveA.textContent = server === 'A' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
   el.serveB.textContent = server === 'B' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
-  el.serveA.classList.toggle('hidden', server !== 'A');
-  el.serveB.classList.toggle('hidden', server !== 'B');
+  el.serveA.classList.toggle('visible', server === 'A');
+  el.serveB.classList.toggle('visible', server === 'B');
 
   el.btnA.disabled = !!matchWinner || showNewSetPrompt;
   el.btnB.disabled = !!matchWinner || showNewSetPrompt;
