@@ -162,6 +162,24 @@ function currentServerPlayerName() {
   return players[servingIndex];
 }
 
+// Tippen auf den Aufschlag-Badge tauscht, wer von den beiden
+// Doppel-Partner*innen des aktuell aufschlagenden Teams gerade als
+// Aufschläger*in angezeigt wird — z.B. wenn versehentlich die falsche
+// Startzuordnung gewählt wurde oder sich das Team real anders aufgestellt
+// hat. Es wird nur die Startzuordnung (rightCourtStart) des laufenden
+// Satzes geflippt; currentServerPlayerName() simuliert von dort aus neu,
+// wodurch sich die angezeigte Person unmittelbar ändert, ohne den
+// Punktestand anzufassen.
+function toggleServerPlayer(side) {
+  if (!match || match.matchType !== 'doppel') return;
+  const setIndex = currentSetIndex();
+  const assignment = match.rightCourtStart[setIndex];
+  if (!assignment) return;
+  assignment[side] = assignment[side] === 0 ? 1 : 0;
+  persistMatch();
+  renderLive();
+}
+
 function renderLive() {
   const regeln = regelnFuerMatch();
   const { saetze, current } = computeState(match.history, regeln);
@@ -474,8 +492,28 @@ function isPreciseMousePointer(e) {
   return e.pointerType === 'touch' && e.width <= 1 && e.height <= 1;
 }
 
-el.btnA.addEventListener('click', () => { if (lastPointerWasMouse) return; scorePoint('A'); });
-el.btnB.addEventListener('click', () => { if (lastPointerWasMouse) return; scorePoint('B'); });
+el.btnA.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  if (touchLongPressFired) { touchLongPressFired = false; return; }
+  scorePoint('A');
+});
+el.btnB.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  if (touchLongPressFired) { touchLongPressFired = false; return; }
+  scorePoint('B');
+});
+// Tippen/Klicken auf das Aufschlag-Badge selbst tauscht nur den
+// angezeigten Aufschläger innerhalb des Teams — stopPropagation
+// verhindert, dass der umschließende Score-Button zusätzlich noch
+// einen Punkt zählt.
+el.serveA.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleServerPlayer('A');
+});
+el.serveB.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleServerPlayer('B');
+});
 el.btnNewSetConfirm.addEventListener('click', () => {
   const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
   const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
@@ -505,8 +543,11 @@ document.addEventListener('pointerdown', (e) => {
 // Klicks/Presses auf andere Buttons (Undo, Match abbrechen/speichern,
 // "Weiter" beim Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen
 // Punkt geben — nur echte Klicks auf freie Fläche oder direkt auf die
-// Score-Buttons zählen hier mit.
+// Score-Buttons zählen hier mit. Das Aufschlag-Badge zählt ebenfalls nicht
+// mit: es hat sein eigenes Klick-Verhalten (Aufschläger*in tauschen) und
+// würde sonst per Maus zusätzlich noch einen Punkt zählen.
 function isOtherControl(target) {
+  if (target.closest('.serve-indicator')) return true;
   const control = target.closest('button, a, input, select, textarea');
   return control && control !== el.btnA && control !== el.btnB;
 }
@@ -561,6 +602,44 @@ document.addEventListener('pointerup', (e) => {
 
 document.addEventListener('pointerleave', clearLongPressTimer, true);
 document.addEventListener('pointercancel', clearLongPressTimer);
+
+// Finger lange halten (auf einem Touchscreen): analog zur Maus zieht das
+// gezielt den letzten Punkt der jeweils berührten Seite ab. Der normale
+// kurze Tap läuft weiterhin über die nativen "click"-Handler auf den
+// Buttons (oben) — hier wird nur der Timer verwaltet und, falls er
+// feuert, der nachfolgende native Klick per touchLongPressFired
+// unterdrückt, damit nicht zusätzlich noch ein Punkt gezählt wird.
+let touchLongPressFired = false;
+let touchLongPressTimer = null;
+
+function clearTouchLongPressTimer() {
+  if (touchLongPressTimer) {
+    clearTimeout(touchLongPressTimer);
+    touchLongPressTimer = null;
+  }
+}
+
+document.addEventListener('pointerdown', (e) => {
+  clearTouchLongPressTimer();
+  if (isPreciseMousePointer(e) || e.pointerType !== 'touch') return;
+  if (!el.views.live.classList.contains('active')) return;
+  if (e.target.closest('.serve-indicator')) return; // eigenes Tap-Verhalten, siehe unten.
+
+  const btn = e.target.closest('.score-btn');
+  const side = btn === el.btnA ? 'A' : btn === el.btnB ? 'B' : null;
+  if (!side) return;
+
+  touchLongPressFired = false;
+  touchLongPressTimer = setTimeout(() => {
+    touchLongPressFired = true;
+    removeLastPointFromSide(side);
+    touchLongPressTimer = null;
+  }, LONG_PRESS_MS);
+});
+
+document.addEventListener('pointerup', clearTouchLongPressTimer);
+document.addEventListener('pointerleave', clearTouchLongPressTimer, true);
+document.addEventListener('pointercancel', clearTouchLongPressTimer);
 
 // Nur noch fürs Unterdrücken des nativen Kontextmenüs — zählt selbst nichts.
 document.addEventListener('contextmenu', (e) => {

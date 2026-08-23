@@ -108,6 +108,28 @@ Nur bei echter Maus (auch eine per Bluetooth verbundene Maus/Trackpad an
 einem iPad wird erkannt) — Finger-Tap auf einem Touchscreen bleibt normales
 Antippen der Score-Buttons.
 
+## Fernbedienung (Finger/Touch)
+
+Auf einem echten Touchscreen (Finger, kein Maus-/Trackpad-Zeiger) gilt
+analog zur Maus-Fernbedienung:
+
+| Aktion                              | Ergebnis |
+| ------------------------------------ | -------- |
+| Kurzes Antippen des Score-Buttons    | Punkt für das jeweilige Team |
+| Finger auf dem Score-Button halten (≥ 0,5s) | Letzten Punkt **vom angetippten Team** zurückziehen |
+
+Funktioniert nur, solange die Live-Ansicht aktiv ist.
+
+## Aufschläger*in tauschen (Doppel)
+
+Beim Doppel zeigt das 🏸-Aufschlag-Badge über dem Punktestand an, wer gerade
+aufschlägt. Ein Tippen/Klicken **auf dieses Badge selbst** tauscht nur die
+angezeigte Person innerhalb des aufschlagenden Teams — z.B. wenn bei der
+Satzstart-Abfrage versehentlich die falsche Aufstellung gewählt wurde oder
+sich das Team real anders hingestellt hat. Der Punktestand bleibt dabei
+unverändert; das Badge liegt nur so lange still, wie kein anderes Team
+aufschlägt (dann ist es unsichtbar und reagiert nicht auf Eingaben).
+
 ## Icons
 
 Die PWA-Icons unter `icons/` sind einfarbige Platzhalter, erzeugt durch:
