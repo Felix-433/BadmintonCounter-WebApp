@@ -502,18 +502,11 @@ el.btnB.addEventListener('click', () => {
   if (touchLongPressFired) { touchLongPressFired = false; return; }
   scorePoint('B');
 });
-// Tippen/Klicken auf das Aufschlag-Badge selbst tauscht nur den
-// angezeigten Aufschläger innerhalb des Teams — stopPropagation
-// verhindert, dass der umschließende Score-Button zusätzlich noch
-// einen Punkt zählt.
-el.serveA.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleServerPlayer('A');
-});
-el.serveB.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleServerPlayer('B');
-});
+// Tippen/Klicken auf das Aufschlag-Badge (oben neben der Satzanzeige,
+// eigenständiger Button, nicht Teil von btn-a/btn-b) tauscht nur den
+// angezeigten Aufschläger innerhalb des Teams.
+el.serveA.addEventListener('click', () => toggleServerPlayer('A'));
+el.serveB.addEventListener('click', () => toggleServerPlayer('B'));
 el.btnNewSetConfirm.addEventListener('click', () => {
   const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
   const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
@@ -541,13 +534,10 @@ document.addEventListener('pointerdown', (e) => {
 }, true);
 
 // Klicks/Presses auf andere Buttons (Undo, Match abbrechen/speichern,
-// "Weiter" beim Satzwechsel, Navigation, ...) sollen nicht zusätzlich einen
-// Punkt geben — nur echte Klicks auf freie Fläche oder direkt auf die
-// Score-Buttons zählen hier mit. Das Aufschlag-Badge zählt ebenfalls nicht
-// mit: es hat sein eigenes Klick-Verhalten (Aufschläger*in tauschen) und
-// würde sonst per Maus zusätzlich noch einen Punkt zählen.
+// "Weiter" beim Satzwechsel, Navigation, das Aufschlag-Badge, ...) sollen
+// nicht zusätzlich einen Punkt geben — nur echte Klicks auf freie Fläche
+// oder direkt auf die Score-Buttons zählen hier mit.
 function isOtherControl(target) {
-  if (target.closest('.serve-indicator')) return true;
   const control = target.closest('button, a, input, select, textarea');
   return control && control !== el.btnA && control !== el.btnB;
 }
@@ -623,7 +613,6 @@ document.addEventListener('pointerdown', (e) => {
   clearTouchLongPressTimer();
   if (isPreciseMousePointer(e) || e.pointerType !== 'touch') return;
   if (!el.views.live.classList.contains('active')) return;
-  if (e.target.closest('.serve-indicator')) return; // eigenes Tap-Verhalten, siehe unten.
 
   const btn = e.target.closest('.score-btn');
   const side = btn === el.btnA ? 'A' : btn === el.btnB ? 'B' : null;

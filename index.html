@@ -72,7 +72,11 @@
     </section>
 
     <section id="view-live" class="view">
-      <div class="sets-summary" id="sets-summary"></div>
+      <div class="live-top-row">
+        <button type="button" class="serve-indicator" id="serve-a">🏸 Aufschlag</button>
+        <div class="sets-summary" id="sets-summary"></div>
+        <button type="button" class="serve-indicator" id="serve-b">🏸 Aufschlag</button>
+      </div>
 
       <div id="new-set-prompt" class="new-set-banner hidden">
         <p id="new-set-title"></p>
@@ -92,12 +96,10 @@
       <div class="court">
         <button type="button" class="score-btn side-a" id="btn-a">
           <span class="player-name" id="name-a"></span>
-          <span class="serve-indicator" id="serve-a">🏸 Aufschlag</span>
           <span class="score" id="score-a">0</span>
         </button>
         <button type="button" class="score-btn side-b" id="btn-b">
           <span class="player-name" id="name-b"></span>
-          <span class="serve-indicator" id="serve-b">🏸 Aufschlag</span>
           <span class="score" id="score-b">0</span>
         </button>
       </div>

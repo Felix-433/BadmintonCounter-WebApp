@@ -118,17 +118,25 @@ analog zur Maus-Fernbedienung:
 | Kurzes Antippen des Score-Buttons    | Punkt für das jeweilige Team |
 | Finger auf dem Score-Button halten (≥ 0,5s) | Letzten Punkt **vom angetippten Team** zurückziehen |
 
-Funktioniert nur, solange die Live-Ansicht aktiv ist.
+Funktioniert nur, solange die Live-Ansicht aktiv ist. Die Score-Buttons
+unterdrücken dabei per CSS (`user-select`/`-webkit-touch-callout: none`)
+die native Textauswahl-Markierung, die iOS/Android sonst bei langem Halten
+auf Text zeigen würden.
 
 ## Aufschläger*in tauschen (Doppel)
 
-Beim Doppel zeigt das 🏸-Aufschlag-Badge über dem Punktestand an, wer gerade
-aufschlägt. Ein Tippen/Klicken **auf dieses Badge selbst** tauscht nur die
-angezeigte Person innerhalb des aufschlagenden Teams — z.B. wenn bei der
-Satzstart-Abfrage versehentlich die falsche Aufstellung gewählt wurde oder
-sich das Team real anders hingestellt hat. Der Punktestand bleibt dabei
-unverändert; das Badge liegt nur so lange still, wie kein anderes Team
-aufschlägt (dann ist es unsichtbar und reagiert nicht auf Eingaben).
+Beim Doppel sitzen links und rechts neben der Satzanzeige (oben, über den
+Score-Buttons) zwei 🏸-Aufschlag-Badges — eines pro Team, an derselben
+Seite wie der jeweilige Score-Button darunter. Sie zeigen an, wer gerade
+aufschlägt, und sind eigenständige Buttons (nicht Teil der großen
+Score-Buttons). Ein Tippen/Klicken **auf das Badge des aufschlagenden
+Teams** tauscht nur die angezeigte Person innerhalb dieses Teams — z.B.
+wenn bei der Satzstart-Abfrage versehentlich die falsche Aufstellung
+gewählt wurde oder sich das Team real anders hingestellt hat. Der
+Punktestand bleibt dabei unverändert. Das Badge des gerade nicht
+aufschlagenden Teams ist unsichtbar (reserviert aber weiter seinen Platz,
+damit die Satzanzeige nicht seitlich springt) und reagiert nicht auf
+Eingaben.
 
 ## Icons
 

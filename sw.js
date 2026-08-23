@@ -1,4 +1,4 @@
-const CACHE_NAME = 'badmintoncounter-shell-v32';
+const CACHE_NAME = 'badmintoncounter-shell-v33';
 // Relative zum sw.js-Standort, damit es sowohl unter der Domain-Wurzel
 // (lokaler node:http-Server) als auch unter einem Unterpfad
 // (z.B. GitHub Pages: /BadmintonCounter-WebApp/) funktioniert.
