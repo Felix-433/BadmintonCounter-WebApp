@@ -125,9 +125,9 @@ auf Text zeigen würden.
 
 ## Aufschläger*in tauschen (Doppel)
 
-Beim Doppel sitzen links und rechts neben der Satzanzeige (oben, über den
-Score-Buttons) zwei 🏸-Aufschlag-Badges — eines pro Team, an derselben
-Seite wie der jeweilige Score-Button darunter. Sie zeigen an, wer gerade
+Beim Doppel sitzen zwischen Satzanzeige und Score-Buttons zwei
+🏸-Aufschlag-Badges — eines pro Team, jeweils horizontal zentriert über dem
+zugehörigen Score-Button darunter. Sie zeigen an, wer gerade
 aufschlägt, und sind eigenständige Buttons (nicht Teil der großen
 Score-Buttons). Ein Tippen/Klicken **auf das Badge des aufschlagenden
 Teams** tauscht nur die angezeigte Person innerhalb dieses Teams — z.B.

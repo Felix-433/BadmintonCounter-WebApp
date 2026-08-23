@@ -202,17 +202,18 @@ button.primary {
 }
 
 /* Live scoring */
-.live-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
 .sets-summary {
-  flex: 1;
   text-align: center;
   color: var(--text-dim);
+}
+
+/* Gleiches 2-Spalten-Raster wie .court darunter, damit jedes Aufschlag-Badge
+   exakt über seinem Team-Score-Button zentriert steht. */
+.serve-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  justify-items: center;
 }
 
 .sets-pips {
@@ -297,7 +298,7 @@ button.primary {
   color: var(--text);
   white-space: nowrap;
   /* visibility statt display:none: der Platz bleibt reserviert, damit die
-     Satzanzeige in der Mitte beim Aufschlagwechsel nicht seitlich springt. */
+     Zeile beim Aufschlagwechsel nicht in der Höhe springt. */
   visibility: hidden;
 }
 
