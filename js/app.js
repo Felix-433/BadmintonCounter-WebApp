@@ -502,11 +502,19 @@ el.btnB.addEventListener('click', () => {
   if (touchLongPressFired) { touchLongPressFired = false; return; }
   scorePoint('B');
 });
-// Tippen/Klicken auf das Aufschlag-Badge (oben neben der Satzanzeige,
-// eigenständiger Button, nicht Teil von btn-a/btn-b) tauscht nur den
-// angezeigten Aufschläger innerhalb des Teams.
-el.serveA.addEventListener('click', () => toggleServerPlayer('A'));
-el.serveB.addEventListener('click', () => toggleServerPlayer('B'));
+// Tippen auf das Aufschlag-Badge (oben neben der Satzanzeige, eigenständiger
+// Button, nicht Teil von btn-a/btn-b) tauscht nur den angezeigten
+// Aufschläger innerhalb des Teams — nur per Finger-Tap, nicht per Maus (bei
+// der Maus-Fernbedienung zählt ein Klick dort wie überall sonst als Punkt,
+// siehe isOtherControl unten).
+el.serveA.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  toggleServerPlayer('A');
+});
+el.serveB.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  toggleServerPlayer('B');
+});
 el.btnNewSetConfirm.addEventListener('click', () => {
   const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
   const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
@@ -514,9 +522,22 @@ el.btnNewSetConfirm.addEventListener('click', () => {
   persistMatch();
   renderLive();
 });
-el.btnUndo.addEventListener('click', undoPoint);
-el.btnCancel.addEventListener('click', cancelMatch);
-el.btnSave.addEventListener('click', saveMatch);
+// Undo/Abbrechen/Speichern per Maus lösen bewusst NICHT ihre Aktion aus,
+// sondern zählen wie jeder andere Mausklick nur einen Punkt (siehe
+// isOtherControl oben) — per Maus laufen diese drei stattdessen über die
+// Tastatur (Backspace/Escape/S, siehe der keydown-Listener weiter unten).
+el.btnUndo.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  undoPoint();
+});
+el.btnCancel.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  cancelMatch();
+});
+el.btnSave.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  saveMatch();
+});
 
 // Bluetooth-Maus als Fernbedienung: linke Maustaste = Punkt Team A, rechte
 // Maustaste = Punkt Team B, überall im Live-Scoring-Bildschirm (nicht nur auf
@@ -533,13 +554,15 @@ document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
-// Klicks/Presses auf andere Buttons (Undo, Match abbrechen/speichern,
-// "Weiter" beim Satzwechsel, Navigation, das Aufschlag-Badge, ...) sollen
-// nicht zusätzlich einen Punkt geben — nur echte Klicks auf freie Fläche
-// oder direkt auf die Score-Buttons zählen hier mit.
-function isOtherControl(target) {
-  const control = target.closest('button, a, input, select, textarea');
-  return control && control !== el.btnA && control !== el.btnB;
+// Bei der Maus-Fernbedienung soll ein Klick/Press AUSNAHMSLOS einen Punkt
+// geben, egal wo auf dem Bildschirm der Mauszeiger gerade steht (auch über
+// Undo, Match abbrechen/speichern, "Weiter" beim Satzwechsel, dem
+// Aufschlag-Badge, ...) — Finger-Taps auf diese Buttons funktionieren dabei
+// unverändert normal, da diese Prüfung nur den Maus-Zweig betrifft (siehe
+// isPreciseMousePointer oben) und die jeweiligen Klick-Handler selbst per
+// lastPointerWasMouse auf Maus verzichten.
+function isOtherControl() {
+  return false;
 }
 
 const LONG_PRESS_MS = 500;
@@ -636,6 +659,16 @@ document.addEventListener('contextmenu', (e) => {
   e.preventDefault();
 });
 
+// Von der Maus zählen ausschließlich die beiden Maustasten (siehe oben,
+// pointerdown/pointerup). Mausradscrollen soll im Live-Scoring-Bildschirm
+// keinerlei Wirkung haben (kein versehentliches Verschieben der Ansicht) —
+// wird deshalb komplett unterdrückt. Zeigerbewegung (pointermove/mousemove)
+// wird bewusst nirgends abgehört, es gibt also ohnehin keine Reaktion darauf.
+document.addEventListener('wheel', (e) => {
+  if (!el.views.live.classList.contains('active')) return;
+  e.preventDefault();
+}, { passive: false });
+
 // Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
 // normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
 // (je nach Modell). Nur aktiv während des Live-Scorings, und nicht während
@@ -678,9 +711,24 @@ document.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       undoPoint();
       break;
+    case 'Escape':
+      e.preventDefault();
+      if (e.repeat) return;
+      cancelMatch();
+      break;
     case 'Enter':
       e.preventDefault();
       break;
+    default:
+      // "S" speichert das Match — nur sinnvoll (und nur erlaubt), wenn das
+      // Match tatsächlich vorbei ist und der Speichern-Button/-Banner
+      // eingeblendet ist; mittendrin würde saveMatch() das Match sonst
+      // vorzeitig mit unvollständigem Ergebnis abschließen.
+      if (e.key.toLowerCase() === 's' && !el.matchOverBanner.classList.contains('hidden')) {
+        e.preventDefault();
+        if (e.repeat) return;
+        saveMatch();
+      }
   }
 });
 

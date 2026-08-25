@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>BadmintonCounter</title>
 <meta name="theme-color" content="#122a4d">
+<!-- iOS/iPadOS respektiert den Web-App-Manifest-"display: standalone" beim
+     "Zum Home-Bildschirm"-Hinzufügen nicht zuverlässig — diese Apple-eigenen
+     Tags sorgen zusätzlich dafür, dass die App dann wirklich ohne Safari-
+     Oberfläche (Adressleiste, Tab-Leiste) startet. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BadmintonCounter">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
