@@ -732,6 +732,83 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Bluetooth-Gamepad als Fernbedienung (siehe gamepad-test.html für die
+// Button-Index-Ermittlung an einem neuen/anderen Gamepad-Modell). Nur aktiv
+// im Live-Scoring-Bildschirm, analog zu Tastatur/Maus oben.
+//
+// Die beiden großen Schultertasten (Index 4/5) wurden bewusst NICHT belegt:
+// bei ihnen war im Test eine spürbare Verzögerung zwischen Tastendruck und
+// Reaktion zu beobachten (vermutlich Bluetooth-Reporting-Eigenheit dieser
+// Tasten am getesteten Gamepad), während Face-Buttons (0-3) und D-Pad
+// (14/15) verzögerungsfrei reagierten — deshalb übernehmen die stattdessen
+// die Belegung.
+//
+// Die Gamepad API kennt keine Tastendruck-Events, der Zustand muss per
+// Polling abgefragt werden — hier per requestAnimationFrame, läuft also mit
+// der Bildwiederholrate (~alle 16ms).
+const GAMEPAD_SCORE_MAP = [
+  [0, 'A'], // Face-Button unten (z.B. A/Cross)
+  [2, 'A'], // Face-Button links (z.B. X/Square)
+  [1, 'B'], // Face-Button rechts (z.B. B/Circle)
+  [3, 'B'], // Face-Button oben (z.B. Y/Triangle)
+];
+const GAMEPAD_REMOVE_MAP = [
+  [14, 'A'], // D-Pad links: letzten Punkt von Team A abziehen
+  [15, 'B'], // D-Pad rechts: letzten Punkt von Team B abziehen
+];
+const gamepadButtonState = {}; // key: `${padIndex}:${buttonIndex}` -> war zuletzt gedrückt?
+let gamepadLoopRunning = false;
+
+function pollGamepadButtonGroup(pad, map, liveActive, onPress) {
+  map.forEach(([btnIndex, side]) => {
+    const btn = pad.buttons[btnIndex];
+    if (!btn) return;
+    const key = `${pad.index}:${btnIndex}`;
+    const isPressed = btn.pressed || btn.value > 0.5;
+    const wasPressed = gamepadButtonState[key] || false;
+    gamepadButtonState[key] = isPressed;
+    // Nur auf den Wechsel "losgelassen -> gedrückt" reagieren (wie e.repeat
+    // bei der Tastatur oben) — sonst würde Halten der Taste bei jedem
+    // Frame erneut auslösen.
+    if (isPressed && !wasPressed && liveActive) {
+      onPress(side);
+    }
+  });
+}
+
+function pollGamepads() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const liveActive = el.views.live.classList.contains('active');
+  let anyConnected = false;
+
+  for (const pad of pads) {
+    if (!pad) continue;
+    anyConnected = true;
+    pollGamepadButtonGroup(pad, GAMEPAD_SCORE_MAP, liveActive, scorePoint);
+    pollGamepadButtonGroup(pad, GAMEPAD_REMOVE_MAP, liveActive, removeLastPointFromSide);
+  }
+
+  if (anyConnected) {
+    requestAnimationFrame(pollGamepads);
+  } else {
+    gamepadLoopRunning = false; // Loop stoppen, bis wieder ein Gamepad verbunden ist.
+  }
+}
+
+function ensureGamepadLoop() {
+  if (gamepadLoopRunning) return;
+  gamepadLoopRunning = true;
+  requestAnimationFrame(pollGamepads);
+}
+
+window.addEventListener('gamepadconnected', ensureGamepadLoop);
+// Falls beim Laden der Seite schon ein Gamepad verbunden ist (z.B. nach
+// einem Reload bei bereits gekoppeltem Gerät), kommt gamepadconnected u.U.
+// nicht erneut — deshalb hier zusätzlich einmal direkt prüfen.
+if (navigator.getGamepads && Array.from(navigator.getGamepads()).some(Boolean)) {
+  ensureGamepadLoop();
+}
+
 el.nav.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-view]');
   if (btn) showView(btn.dataset.view);

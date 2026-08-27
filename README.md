@@ -123,6 +123,29 @@ unterdrücken dabei per CSS (`user-select`/`-webkit-touch-callout: none`)
 die native Textauswahl-Markierung, die iOS/Android sonst bei langem Halten
 auf Text zeigen würden.
 
+## Fernbedienung (Gamepad)
+
+Ein per Bluetooth gekoppeltes Gamepad kann während des Live-Scorings
+ebenfalls Punkte zählen (Gamepad API, kein separates Pairing in der App
+nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
+
+| Taste                  | Aktion |
+| ----------------------- | ------ |
+| Face-Button unten/links (Index 0/2) | Punkt für Team A |
+| Face-Button rechts/oben (Index 1/3) | Punkt für Team B |
+| D-Pad links (Index 14)  | Letzten Punkt **von Team A** zurückziehen |
+| D-Pad rechts (Index 15) | Letzten Punkt **von Team B** zurückziehen |
+| Schultertasten (Index 4/5) | deaktiviert |
+
+Die Schultertasten sind bewusst deaktiviert: am getesteten Gamepad reagierten
+sie spürbar verzögert, während Face-Buttons und D-Pad verzögerungsfrei
+zählten. Button-Indizes folgen dem W3C-Standardmapping, sind bei anderen
+Gamepad-Modellen aber nicht garantiert identisch — im Zweifel mit
+`gamepad-test.html` (Diagnose-Seite im Repo-Root, nicht Teil der
+eigentlichen App) die tatsächliche Belegung des jeweiligen Geräts prüfen.
+
+Funktioniert nur, solange die Live-Ansicht aktiv ist.
+
 ## Aufschläger*in tauschen (Doppel)
 
 Beim Doppel sitzen zwei 🏸-Aufschlag-Badges in derselben Zeile wie die

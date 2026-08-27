@@ -1,0 +1,230 @@
+<title>Gamepad-Test — BadmintonCounter</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Reines Diagnose-Werkzeug zum Identifizieren von Gamepad-Tasten-Indizes
+  (Bluetooth-Gamepad → Gamepad API). Ist NICHT Teil der eigentlichen App:
+  nicht in index.html verlinkt, nicht in sw.js SHELL_ASSETS gelistet, läuft
+  also nicht offline und braucht deshalb auch keinen CACHE_NAME-Bump beim
+  Ändern. Kann nach Gebrauch einfach wieder gelöscht werden.
+
+  Zweck: jede Taste am Gamepad einmal drücken und im Event-Log ablesen,
+  welcher Button-Index (bzw. bei Stick/Trigger-Achsen welcher Achsen-Index)
+  dabei feuert — das ist die Grundlage, um in js/app.js eine feste Zuordnung
+  "Taste X → Aktion Y" zu programmieren.
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #14171c;
+    --panel: #1e2229;
+    --border: #333a45;
+    --text: #e7eaf0;
+    --muted: #8b93a3;
+    --accent: #4da3ff;
+    --active: #35d07f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+  }
+  h1 { font-size: 1.2rem; margin: 0 0 4px; }
+  p.hint { color: var(--muted); margin: 0 0 16px; line-height: 1.4; }
+  .status {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  .status.connected { border-color: var(--active); }
+  .pad-id { color: var(--muted); word-break: break-all; }
+  h2 { font-size: 1rem; margin: 20px 0 8px; }
+  .buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 6px;
+  }
+  .btn-cell {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    transition: background 0.05s, border-color 0.05s;
+  }
+  .btn-cell.pressed {
+    background: var(--active);
+    border-color: var(--active);
+    color: #04150b;
+  }
+  .btn-cell .idx { font-weight: 700; font-size: 1.05rem; display: block; }
+  .btn-cell .val { font-size: 0.7rem; color: inherit; opacity: 0.8; display: block; }
+  .axes-list { display: flex; flex-direction: column; gap: 6px; }
+  .axis-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+  .axis-row .label { width: 64px; flex-shrink: 0; color: var(--muted); }
+  .axis-row .bar-track {
+    flex: 1;
+    height: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    position: relative;
+    overflow: hidden;
+  }
+  .axis-row .bar-fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    background: var(--accent);
+  }
+  .axis-row .val { width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+  #log {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 40vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  #log li {
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  #log li:last-child { border-bottom: none; }
+  #log li.up { color: var(--muted); }
+  button.clear-log {
+    margin: 8px 0 0;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+</style>
+
+<h1>🎮 Gamepad-Test</h1>
+<p class="hint">
+  Gamepad per Bluetooth mit dem iPad koppeln, dann hier jede Taste einmal
+  drücken. Unten im Event-Log erscheint dazu der Button-Index — das ist
+  die Nummer, die für die Zuordnung "Taste → Aktion" in <code>js/app.js</code>
+  gebraucht wird. Bei Sticks/Analog-Triggern die Achsen-Werte weiter unten
+  beobachten.
+</p>
+
+<div id="status" class="status">Kein Gamepad verbunden — irgendeine Taste drücken, damit iPadOS/Safari es erkennt.</div>
+
+<h2>Buttons</h2>
+<div id="buttons" class="buttons-grid"></div>
+
+<h2>Achsen (Sticks / Analog-Trigger)</h2>
+<div id="axes" class="axes-list"></div>
+
+<h2>Event-Log</h2>
+<ul id="log"></ul>
+<button class="clear-log" id="clearLog">Log leeren</button>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const buttonsEl = document.getElementById('buttons');
+  const axesEl = document.getElementById('axes');
+  const logEl = document.getElementById('log');
+  document.getElementById('clearLog').addEventListener('click', () => { logEl.innerHTML = ''; });
+
+  // Letzter bekannter pressed-Zustand pro Gamepad-Index+Button-Index, um im
+  // Log nur echte Wechsel (gedrückt/losgelassen) zu vermerken statt bei
+  // jedem Animationsframe erneut zu loggen.
+  const lastPressed = {}; // key: `${padIndex}:${buttonIndex}` -> bool
+
+  function log(text, cls) {
+    const li = document.createElement('li');
+    if (cls) li.className = cls;
+    const t = new Date();
+    const ts = [t.getHours(), t.getMinutes(), t.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':')
+      + '.' + String(t.getMilliseconds()).padStart(3, '0');
+    li.textContent = `${ts}  ${text}`;
+    logEl.insertBefore(li, logEl.firstChild);
+    // Log nicht unbegrenzt wachsen lassen.
+    while (logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
+  }
+
+  window.addEventListener('gamepadconnected', (e) => {
+    log(`Gamepad ${e.gamepad.index} verbunden: "${e.gamepad.id}" (mapping: "${e.gamepad.mapping || '(keins)'}")`);
+  });
+  window.addEventListener('gamepaddisconnected', (e) => {
+    log(`Gamepad ${e.gamepad.index} getrennt.`);
+  });
+
+  function render() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const connected = Array.from(pads).filter(Boolean);
+
+    if (connected.length === 0) {
+      statusEl.className = 'status';
+      statusEl.textContent = 'Kein Gamepad verbunden — irgendeine Taste drücken, damit iPadOS/Safari es erkennt.';
+      buttonsEl.innerHTML = '';
+      axesEl.innerHTML = '';
+      requestAnimationFrame(render);
+      return;
+    }
+
+    statusEl.className = 'status connected';
+    statusEl.innerHTML = connected
+      .map((p) => `Gamepad ${p.index}: <strong>${p.id}</strong><br><span class="pad-id">mapping: "${p.mapping || '(keins — Layout ist herstellerspezifisch)'}" · ${p.buttons.length} Buttons · ${p.axes.length} Achsen</span>`)
+      .join('<hr style="border-color: var(--border); margin: 8px 0;">');
+
+    buttonsEl.innerHTML = '';
+    axesEl.innerHTML = '';
+
+    connected.forEach((pad) => {
+      pad.buttons.forEach((btn, i) => {
+        const key = `${pad.index}:${i}`;
+        const isPressed = btn.pressed || btn.value > 0.5;
+        if (lastPressed[key] === undefined) lastPressed[key] = false;
+        if (isPressed !== lastPressed[key]) {
+          lastPressed[key] = isPressed;
+          if (isPressed) {
+            log(`Gamepad ${pad.index} · Button ${i} gedrückt (Wert ${btn.value.toFixed(2)})`);
+          } else {
+            log(`Gamepad ${pad.index} · Button ${i} losgelassen`, 'up');
+          }
+        }
+
+        const cell = document.createElement('div');
+        cell.className = 'btn-cell' + (isPressed ? ' pressed' : '');
+        cell.innerHTML = `<span class="idx">${i}</span><span class="val">${btn.value.toFixed(2)}</span>`;
+        buttonsEl.appendChild(cell);
+      });
+
+      pad.axes.forEach((val, i) => {
+        const row = document.createElement('div');
+        row.className = 'axis-row';
+        const pct = Math.max(-50, Math.min(50, val * 50));
+        const fillStyle = pct >= 0
+          ? `left: 50%; width: ${pct}%;`
+          : `left: ${50 + pct}%; width: ${-pct}%;`;
+        row.innerHTML = `
+          <span class="label">Achse ${i}</span>
+          <span class="bar-track"><span class="bar-fill" style="${fillStyle}"></span></span>
+          <span class="val">${val.toFixed(2)}</span>
+        `;
+        axesEl.appendChild(row);
+      });
+    });
+
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+</script>
