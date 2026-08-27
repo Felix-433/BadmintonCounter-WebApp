@@ -278,15 +278,20 @@ button.primary {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  /* An Spaltenbreite UND Zeilenhöhe der Aufschlag-Zone gekoppelt (min() aus
+     beidem), damit sowohl der eigene Aufschläger-Name als auch der
+     gegnerische Teamname den verfügbaren Platz maximal ausfüllen, ohne bei
+     langen Namen aus der Zeile bzw. Zone zu laufen (word-break bricht
+     nötigenfalls zusätzlich um). */
+  font-size: clamp(1.1rem, min(7.5vw, 3.6vh), 2.75rem);
+  line-height: 1.05;
+  font-weight: 700;
   text-align: center;
   word-break: break-word;
 }
 
 .serve-zone.serving {
-  font-weight: 700;
   color: var(--accent);
 }
 
