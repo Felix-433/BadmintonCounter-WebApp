@@ -736,7 +736,7 @@ document.addEventListener('keydown', (e) => {
 // Button-Index-Ermittlung an einem neuen/anderen Gamepad-Modell). Nur aktiv
 // im Live-Scoring-Bildschirm, analog zu Tastatur/Maus oben.
 //
-// Die beiden großen Schultertasten (Index 4/5) wurden bewusst NICHT belegt:
+// Die beiden großen Seitentasten (L = Index 4, R = Index 5) wurden bewusst NICHT belegt:
 // bei ihnen war im Test eine spürbare Verzögerung zwischen Tastendruck und
 // Reaktion zu beobachten (vermutlich Bluetooth-Reporting-Eigenheit dieser
 // Tasten am getesteten Gamepad), während Face-Buttons (0-3) und D-Pad

@@ -141,9 +141,9 @@ nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
 | kleine Taste „+“ | 9 | Match abbrechen (fragt wie gewohnt per Bestätigungsdialog nach) |
 | Pfeil ↑ (oben) | 12 | Aufschläger*in Team A tauschen |
 | Pfeil ↓ (unten) | 13 | Aufschläger*in Team B tauschen |
-| Schultertasten (LB/RB) | 4/5 | deaktiviert |
+| Seitentaste L / R | 4/5 | deaktiviert |
 
-Die Schultertasten sind bewusst deaktiviert: am getesteten Gamepad reagierten
+Die Seitentasten (L/R) sind bewusst deaktiviert: am getesteten Gamepad reagierten
 sie spürbar verzögert, während die übrigen Tasten oben verzögerungsfrei
 zählten. Die Bezeichnungen und Button-Indizes oben gelten für das getestete
 Gamepad-Modell — der Index folgt zwar dem W3C-Standardmapping, ist bei
