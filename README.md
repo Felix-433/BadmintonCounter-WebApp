@@ -129,22 +129,26 @@ Ein per Bluetooth gekoppeltes Gamepad kann während des Live-Scorings
 ebenfalls Punkte zählen (Gamepad API, kein separates Pairing in der App
 nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
 
-| Taste                  | Aktion |
-| ----------------------- | ------ |
-| Face-Button unten/links (Index 0/2) | Punkt für Team A |
-| Face-Button rechts/oben (Index 1/3) | Punkt für Team B |
-| D-Pad links (Index 14)  | Letzten Punkt **von Team A** zurückziehen |
-| D-Pad rechts (Index 15) | Letzten Punkt **von Team B** zurückziehen |
-| Button 8  | Undo (letzter Punkt, egal von wem) |
-| Button 9  | Match abbrechen (fragt wie gewohnt per Bestätigungsdialog nach) |
-| Button 12 | Aufschläger*in Team A tauschen |
-| Button 13 | Aufschläger*in Team B tauschen |
-| Schultertasten (Index 4/5) | deaktiviert |
+| Taste am Gamepad (Bezeichnung/Beschriftung) | Button-Index | Aktion |
+| --- | --- | --- |
+| A | 0 | Punkt für Team A |
+| X | 2 | Punkt für Team A |
+| B | 1 | Punkt für Team B |
+| Y | 3 | Punkt für Team B |
+| Pfeil ← (links) | 14 | Letzten Punkt **von Team A** zurückziehen |
+| Pfeil → (rechts) | 15 | Letzten Punkt **von Team B** zurückziehen |
+| kleine Taste „−“ | 8 | Undo (letzter Punkt, egal von wem) |
+| kleine Taste „+“ | 9 | Match abbrechen (fragt wie gewohnt per Bestätigungsdialog nach) |
+| Pfeil ↑ (oben) | 12 | Aufschläger*in Team A tauschen |
+| Pfeil ↓ (unten) | 13 | Aufschläger*in Team B tauschen |
+| Schultertasten (LB/RB) | 4/5 | deaktiviert |
 
 Die Schultertasten sind bewusst deaktiviert: am getesteten Gamepad reagierten
-sie spürbar verzögert, während Face-Buttons und D-Pad verzögerungsfrei
-zählten. Button-Indizes folgen dem W3C-Standardmapping, sind bei anderen
-Gamepad-Modellen aber nicht garantiert identisch — im Zweifel mit
+sie spürbar verzögert, während die übrigen Tasten oben verzögerungsfrei
+zählten. Die Bezeichnungen und Button-Indizes oben gelten für das getestete
+Gamepad-Modell — der Index folgt zwar dem W3C-Standardmapping, ist bei
+anderen Gamepad-Modellen aber nicht garantiert identisch belegt. Im Zweifel
+mit
 `gamepad-test.html` (Diagnose-Seite im Repo-Root, nicht Teil der
 eigentlichen App) die tatsächliche Belegung des jeweiligen Geräts prüfen.
 

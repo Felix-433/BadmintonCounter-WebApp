@@ -746,23 +746,27 @@ document.addEventListener('keydown', (e) => {
 // Die Gamepad API kennt keine Tastendruck-Events, der Zustand muss per
 // Polling abgefragt werden — hier per requestAnimationFrame, läuft also mit
 // der Bildwiederholrate (~alle 16ms).
+// Tasten-Bezeichnungen in den Kommentaren unten (A/B/X/Y, Pfeile, "+"/"-")
+// beziehen sich auf die Beschriftung des getesteten Gamepads, siehe README
+// "Fernbedienung (Gamepad)" — bei anderen Modellen ggf. mit
+// gamepad-test.html neu abgleichen.
 const GAMEPAD_SCORE_MAP = [
-  [0, 'A'], // Face-Button unten (z.B. A/Cross)
-  [2, 'A'], // Face-Button links (z.B. X/Square)
-  [1, 'B'], // Face-Button rechts (z.B. B/Circle)
-  [3, 'B'], // Face-Button oben (z.B. Y/Triangle)
+  [0, 'A'], // Taste A
+  [2, 'A'], // Taste X
+  [1, 'B'], // Taste B
+  [3, 'B'], // Taste Y
 ];
 const GAMEPAD_REMOVE_MAP = [
-  [14, 'A'], // D-Pad links: letzten Punkt von Team A abziehen
-  [15, 'B'], // D-Pad rechts: letzten Punkt von Team B abziehen
+  [14, 'A'], // Pfeil links: letzten Punkt von Team A abziehen
+  [15, 'B'], // Pfeil rechts: letzten Punkt von Team B abziehen
 ];
 // Aktionstasten ohne Seiten-Payload — jeweils eine parameterlose Funktion,
 // siehe pollGamepadButtonGroup unten.
 const GAMEPAD_ACTION_MAP = [
-  [8, undoPoint], // Undo (letzter Punkt, egal von wem)
-  [9, cancelMatch], // Match abbrechen (fragt wie gewohnt per confirm() nach)
-  [12, () => toggleServerPlayer('A')], // Aufschläger*in Team A tauschen
-  [13, () => toggleServerPlayer('B')], // Aufschläger*in Team B tauschen
+  [8, undoPoint], // kleine Taste "-": Undo (letzter Punkt, egal von wem)
+  [9, cancelMatch], // kleine Taste "+": Match abbrechen (fragt wie gewohnt per confirm() nach)
+  [12, () => toggleServerPlayer('A')], // Pfeil oben: Aufschläger*in Team A tauschen
+  [13, () => toggleServerPlayer('B')], // Pfeil unten: Aufschläger*in Team B tauschen
 ];
 const gamepadButtonState = {}; // key: `${padIndex}:${buttonIndex}` -> war zuletzt gedrückt?
 let gamepadLoopRunning = false;
