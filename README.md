@@ -135,6 +135,10 @@ nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
 | Face-Button rechts/oben (Index 1/3) | Punkt für Team B |
 | D-Pad links (Index 14)  | Letzten Punkt **von Team A** zurückziehen |
 | D-Pad rechts (Index 15) | Letzten Punkt **von Team B** zurückziehen |
+| Button 8  | Undo (letzter Punkt, egal von wem) |
+| Button 9  | Match abbrechen (fragt wie gewohnt per Bestätigungsdialog nach) |
+| Button 12 | Aufschläger*in Team A tauschen |
+| Button 13 | Aufschläger*in Team B tauschen |
 | Schultertasten (Index 4/5) | deaktiviert |
 
 Die Schultertasten sind bewusst deaktiviert: am getesteten Gamepad reagierten

@@ -756,11 +756,19 @@ const GAMEPAD_REMOVE_MAP = [
   [14, 'A'], // D-Pad links: letzten Punkt von Team A abziehen
   [15, 'B'], // D-Pad rechts: letzten Punkt von Team B abziehen
 ];
+// Aktionstasten ohne Seiten-Payload — jeweils eine parameterlose Funktion,
+// siehe pollGamepadButtonGroup unten.
+const GAMEPAD_ACTION_MAP = [
+  [8, undoPoint], // Undo (letzter Punkt, egal von wem)
+  [9, cancelMatch], // Match abbrechen (fragt wie gewohnt per confirm() nach)
+  [12, () => toggleServerPlayer('A')], // Aufschläger*in Team A tauschen
+  [13, () => toggleServerPlayer('B')], // Aufschläger*in Team B tauschen
+];
 const gamepadButtonState = {}; // key: `${padIndex}:${buttonIndex}` -> war zuletzt gedrückt?
 let gamepadLoopRunning = false;
 
 function pollGamepadButtonGroup(pad, map, liveActive, onPress) {
-  map.forEach(([btnIndex, side]) => {
+  map.forEach(([btnIndex, payload]) => {
     const btn = pad.buttons[btnIndex];
     if (!btn) return;
     const key = `${pad.index}:${btnIndex}`;
@@ -771,7 +779,7 @@ function pollGamepadButtonGroup(pad, map, liveActive, onPress) {
     // bei der Tastatur oben) — sonst würde Halten der Taste bei jedem
     // Frame erneut auslösen.
     if (isPressed && !wasPressed && liveActive) {
-      onPress(side);
+      onPress(payload);
     }
   });
 }
@@ -786,6 +794,7 @@ function pollGamepads() {
     anyConnected = true;
     pollGamepadButtonGroup(pad, GAMEPAD_SCORE_MAP, liveActive, scorePoint);
     pollGamepadButtonGroup(pad, GAMEPAD_REMOVE_MAP, liveActive, removeLastPointFromSide);
+    pollGamepadButtonGroup(pad, GAMEPAD_ACTION_MAP, liveActive, (fn) => fn());
   }
 
   if (anyConnected) {
