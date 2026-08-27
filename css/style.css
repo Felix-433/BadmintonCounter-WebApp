@@ -202,36 +202,14 @@ button.primary {
 }
 
 /* Live scoring */
-/* Satzanzeige und beide Aufschlag-Badges teilen sich eine Zeile (spart die
-   sonst zusätzliche Zeilenhöhe zwischen ihnen) und liegen dabei alle in
-   derselben Grid-Zeile übereinander: dasselbe 2-Spalten-Raster wie .court
-   darunter sorgt dafür, dass jedes Badge exakt über seinem Team-Score-Button
-   zentriert steht, während die Satzanzeige mittig darüber liegt. */
 .top-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 0.75rem;
+  display: flex;
+  justify-content: center;
 }
 
 .sets-summary {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  justify-self: center;
   text-align: center;
   color: var(--text-dim);
-}
-
-#serve-a {
-  grid-column: 1;
-  grid-row: 1;
-  justify-self: center;
-}
-
-#serve-b {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: center;
 }
 
 .sets-pips {
@@ -267,15 +245,23 @@ button.primary {
   min-height: 45vh;
 }
 
+/* Jedes Team-Feld ist fest in ein oberes Viertel (Aufschläger-Anzeige,
+   Umschalt-Fläche) und ein unteres Dreiviertel (Punktestand) aufgeteilt.
+   Die Aufteilung steht unabhängig davon, wer gerade aufschlägt, damit der
+   Punktestand darunter nie seine Position/Größe ändert. */
+.team-box {
+  display: grid;
+  grid-template-rows: 1fr 3fr;
+  gap: 2px;
+  border-radius: 1rem;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+}
+
+.serve-zone,
 .score-btn {
   border: none;
-  border-radius: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.75rem 0.4rem;
   color: white;
   min-height: 0;
   min-width: 0;
@@ -288,40 +274,48 @@ button.primary {
   touch-action: manipulation;
 }
 
-.score-btn.side-a {
-  background: linear-gradient(160deg, var(--side-a), #1d4fb3);
-}
-
-.score-btn.side-b {
-  background: linear-gradient(160deg, var(--side-b), #b23a30);
-}
-
-.score-btn:disabled {
-  opacity: 0.55;
-}
-
-.player-name {
-  font-size: 0.9rem;
+.serve-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
   word-break: break-word;
 }
 
-.serve-indicator {
-  font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.18);
-  border: none;
-  border-radius: 999px;
-  padding: 0.2rem 0.6rem;
-  color: var(--text);
-  white-space: nowrap;
-  /* visibility statt display:none: der Platz bleibt reserviert, damit die
-     Zeile beim Aufschlagwechsel nicht in der Höhe springt. */
-  visibility: hidden;
+.serve-zone.serving {
+  font-weight: 700;
+  color: var(--accent);
 }
 
-.serve-indicator.visible {
-  visibility: visible;
+.serve-zone:disabled,
+.score-btn:disabled {
+  opacity: 0.55;
+}
+
+.team-box.side-a .serve-zone {
+  background: #1d4fb3;
+}
+
+.team-box.side-b .serve-zone {
+  background: #b23a30;
+}
+
+.score-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.4rem;
+}
+
+.team-box.side-a .score-btn {
+  background: linear-gradient(160deg, var(--side-a), #1d4fb3);
+}
+
+.team-box.side-b .score-btn {
+  background: linear-gradient(160deg, var(--side-b), #b23a30);
 }
 
 .score {

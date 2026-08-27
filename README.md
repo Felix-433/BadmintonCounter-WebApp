@@ -156,19 +156,19 @@ Funktioniert nur, solange die Live-Ansicht aktiv ist.
 
 ## Aufschläger*in tauschen (Doppel)
 
-Beim Doppel sitzen zwei 🏸-Aufschlag-Badges in derselben Zeile wie die
-Satzanzeige — eines pro Team, jeweils horizontal zentriert über dem
-zugehörigen Score-Button darunter, links und rechts von der Satzanzeige.
-Sie zeigen an, wer gerade
-aufschlägt, und sind eigenständige Buttons (nicht Teil der großen
-Score-Buttons). Ein Tippen/Klicken **auf das Badge des aufschlagenden
-Teams** tauscht nur die angezeigte Person innerhalb dieses Teams — z.B.
-wenn bei der Satzstart-Abfrage versehentlich die falsche Aufstellung
-gewählt wurde oder sich das Team real anders hingestellt hat. Der
-Punktestand bleibt dabei unverändert. Das Badge des gerade nicht
-aufschlagenden Teams ist unsichtbar (reserviert aber weiter seinen Platz,
-damit die Satzanzeige nicht seitlich springt) und reagiert nicht auf
-Eingaben.
+Jedes Team-Feld ist fest in ein oberes Viertel (Aufschlag-Zone) und ein
+unteres Dreiviertel (Punktestand) aufgeteilt — eigenständige Buttons, nicht
+verschachtelt ineinander. In der Aufschlag-Zone des gerade aufschlagenden
+Teams steht mit 🏸-Symbol, wer aufschlägt; beim Doppel die konkrete Person,
+sonst der Teamname. Die Zone des nicht aufschlagenden Teams zeigt schlicht
+den Teamnamen. Diese Aufteilung steht immer fest, damit der Punktestand
+darunter nie seine Position oder Größe ändert.
+
+Ein Tippen/Klicken **auf die Aufschlag-Zone des aufschlagenden Teams**
+tauscht nur die angezeigte Person innerhalb dieses Teams — z.B. wenn bei der
+Satzstart-Abfrage versehentlich die falsche Aufstellung gewählt wurde oder
+sich das Team real anders hingestellt hat. Der Punktestand bleibt dabei
+unverändert.
 
 ## Icons
 

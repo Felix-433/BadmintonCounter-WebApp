@@ -54,10 +54,10 @@
           <h3 class="team-heading">Team A</h3>
           <div class="team-fields">
             <label>Spieler A1
-              <input id="input-a1" name="a1" autocomplete="off" value="A" required>
+              <input id="input-a1" name="a1" autocomplete="off" value="A1" required>
             </label>
             <label id="label-a2">Spieler A2
-              <input id="input-a2" name="a2" autocomplete="off" value="B">
+              <input id="input-a2" name="a2" autocomplete="off" value="A2">
             </label>
           </div>
         </div>
@@ -66,10 +66,10 @@
           <h3 class="team-heading">Team B</h3>
           <div class="team-fields">
             <label>Spieler B1
-              <input id="input-b1" name="b1" autocomplete="off" value="X" required>
+              <input id="input-b1" name="b1" autocomplete="off" value="B1" required>
             </label>
             <label id="label-b2">Spieler B2
-              <input id="input-b2" name="b2" autocomplete="off" value="Y">
+              <input id="input-b2" name="b2" autocomplete="off" value="B2">
             </label>
           </div>
         </div>
@@ -80,9 +80,7 @@
 
     <section id="view-live" class="view">
       <div class="top-row">
-        <button type="button" class="serve-indicator" id="serve-a">🏸 Aufschlag</button>
         <div class="sets-summary" id="sets-summary"></div>
-        <button type="button" class="serve-indicator" id="serve-b">🏸 Aufschlag</button>
       </div>
 
       <div id="new-set-prompt" class="new-set-banner hidden">
@@ -101,14 +99,18 @@
       </div>
 
       <div class="court">
-        <button type="button" class="score-btn side-a" id="btn-a">
-          <span class="player-name" id="name-a"></span>
-          <span class="score" id="score-a">0</span>
-        </button>
-        <button type="button" class="score-btn side-b" id="btn-b">
-          <span class="player-name" id="name-b"></span>
-          <span class="score" id="score-b">0</span>
-        </button>
+        <div class="team-box side-a">
+          <button type="button" class="serve-zone" id="serve-a"></button>
+          <button type="button" class="score-btn" id="btn-a">
+            <span class="score" id="score-a">0</span>
+          </button>
+        </div>
+        <div class="team-box side-b">
+          <button type="button" class="serve-zone" id="serve-b"></button>
+          <button type="button" class="score-btn" id="btn-b">
+            <span class="score" id="score-b">0</span>
+          </button>
+        </div>
       </div>
 
       <div class="live-controls">

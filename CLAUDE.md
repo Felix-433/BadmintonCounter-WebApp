@@ -25,7 +25,7 @@ im `localStorage` des jeweiligen Geräts (`badmintoncounter:current`,
 
 ## Deploy-Workflow — bei JEDER Code-Änderung an index.html/css/js beachten
 
-1. **`sw.js`: `CACHE_NAME` um eins hochzählen** (aktuell `...-v35`). Ohne
+1. **`sw.js`: `CACHE_NAME` um eins hochzählen** (aktuell `...-v40`). Ohne
    das bekommen Geräte, die die App schon installiert haben, die neue
    Version nicht mit — der Service Worker cached sonst weiter die alte
    Version.
@@ -82,8 +82,10 @@ npm start
   Baseline (Pfeiltasten zählen, Rücktaste = Undo, Enter deaktiviert). Für
   seitenspezifisches Abziehen: Maus-Fernbedienung oder Finger-Long-Press
   verwenden.
-- **Aufschlag-Badges** liegen in derselben Grid-Zeile wie die Satzanzeige,
-  jeweils exakt über ihrem Team-Score-Button zentriert (per `grid-column`/
-  `grid-row`-Überlappung, nicht verschachtelt in den großen Score-Buttons).
-  Antippen tauscht nur den angezeigten Doppel-Aufschläger, ohne den
-  Punktestand zu verändern.
+- **Team-Felder sind in ein oberes Viertel (Aufschlag-Zone) und ein unteres
+  Dreiviertel (Punktestand) aufgeteilt** (`.team-box` mit `grid-template-
+  rows: 1fr 3fr`), als eigenständiger Button neben — nicht verschachtelt in —
+  dem großen Score-Button. Diese feste Aufteilung gilt immer, unabhängig
+  davon, wer gerade aufschlägt, damit der Punktestand nie seine Position/
+  Größe ändert. Antippen der Aufschlag-Zone tauscht nur den angezeigten
+  Doppel-Aufschläger, ohne den Punktestand zu verändern.

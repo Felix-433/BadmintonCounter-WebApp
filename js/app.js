@@ -48,8 +48,6 @@ const el = {
   btnNewSetConfirm: document.getElementById('btn-new-set-confirm'),
   btnA: document.getElementById('btn-a'),
   btnB: document.getElementById('btn-b'),
-  nameA: document.getElementById('name-a'),
-  nameB: document.getElementById('name-b'),
   scoreA: document.getElementById('score-a'),
   scoreB: document.getElementById('score-b'),
   serveA: document.getElementById('serve-a'),
@@ -180,14 +178,23 @@ function toggleServerPlayer(side) {
   renderLive();
 }
 
+// Füllt das obere Viertel eines Team-Feldes: schlägt diese Seite gerade auf,
+// erscheint dort der/die Aufschläger*in (beim Doppel die konkrete Person aus
+// currentServerPlayerName(), sonst der Teamname) mit 🏸-Symbol, sonst einfach
+// nur der Teamname. Die Zeile selbst bleibt immer gleich hoch — nur ihr Inhalt
+// wechselt —, damit der Punktestand im Feld darunter nie seine Position ändert.
+function renderServeZone(zoneEl, side, teamName, server, serverPlayerName) {
+  const isServing = server === side;
+  zoneEl.textContent = isServing ? `🏸 ${serverPlayerName || teamName}` : teamName;
+  zoneEl.classList.toggle('serving', isServing);
+}
+
 function renderLive() {
   const regeln = regelnFuerMatch();
   const { saetze, current } = computeState(match.history, regeln);
   const winsA = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'A').length;
   const winsB = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'B').length;
 
-  el.nameA.textContent = match.spielerA;
-  el.nameB.textContent = match.spielerB;
   el.scoreA.textContent = current.a;
   el.scoreB.textContent = current.b;
 
@@ -225,13 +232,14 @@ function renderLive() {
 
   const server = matchWinner || showNewSetPrompt ? null : currentServer();
   const serverPlayerName = server ? currentServerPlayerName() : null;
-  el.serveA.textContent = server === 'A' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
-  el.serveB.textContent = server === 'B' && serverPlayerName ? `🏸 Aufschlag: ${serverPlayerName}` : '🏸 Aufschlag';
-  el.serveA.classList.toggle('visible', server === 'A');
-  el.serveB.classList.toggle('visible', server === 'B');
+  renderServeZone(el.serveA, 'A', match.spielerA, server, serverPlayerName);
+  renderServeZone(el.serveB, 'B', match.spielerB, server, serverPlayerName);
 
-  el.btnA.disabled = !!matchWinner || showNewSetPrompt;
-  el.btnB.disabled = !!matchWinner || showNewSetPrompt;
+  const controlsDisabled = !!matchWinner || showNewSetPrompt;
+  el.btnA.disabled = controlsDisabled;
+  el.btnB.disabled = controlsDisabled;
+  el.serveA.disabled = controlsDisabled;
+  el.serveB.disabled = controlsDisabled;
   el.btnUndo.disabled = match.history.length === 0;
 
   if (matchWinner) {
@@ -502,11 +510,11 @@ el.btnB.addEventListener('click', () => {
   if (touchLongPressFired) { touchLongPressFired = false; return; }
   scorePoint('B');
 });
-// Tippen auf das Aufschlag-Badge (oben neben der Satzanzeige, eigenständiger
-// Button, nicht Teil von btn-a/btn-b) tauscht nur den angezeigten
-// Aufschläger innerhalb des Teams — nur per Finger-Tap, nicht per Maus (bei
-// der Maus-Fernbedienung zählt ein Klick dort wie überall sonst als Punkt,
-// siehe isOtherControl unten).
+// Tippen auf die Aufschlag-Zone (oberes Viertel jedes Team-Felds,
+// eigenständiger Button, nicht Teil von btn-a/btn-b) tauscht nur den
+// angezeigten Aufschläger innerhalb des Teams — nur per Finger-Tap, nicht
+// per Maus (bei der Maus-Fernbedienung zählt ein Klick dort wie überall
+// sonst als Punkt, siehe isOtherControl unten).
 el.serveA.addEventListener('click', () => {
   if (lastPointerWasMouse) return;
   toggleServerPlayer('A');
