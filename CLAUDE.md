@@ -25,7 +25,7 @@ im `localStorage` des jeweiligen Geräts (`badmintoncounter:current`,
 
 ## Deploy-Workflow — bei JEDER Code-Änderung an index.html/css/js beachten
 
-1. **`sw.js`: `CACHE_NAME` um eins hochzählen** (aktuell `...-v41`). Ohne
+1. **`sw.js`: `CACHE_NAME` um eins hochzählen** (aktuell `...-v42`). Ohne
    das bekommen Geräte, die die App schon installiert haben, die neue
    Version nicht mit — der Service Worker cached sonst weiter die alte
    Version.

@@ -284,7 +284,7 @@ button.primary {
      gegnerische Teamname den verfügbaren Platz maximal ausfüllen, ohne bei
      langen Namen aus der Zeile bzw. Zone zu laufen (word-break bricht
      nötigenfalls zusätzlich um). */
-  font-size: clamp(1.1rem, min(7.5vw, 3.6vh), 2.75rem);
+  font-size: clamp(1.6rem, min(11.5vw, 6.5vh), 4.25rem);
   line-height: 1.05;
   font-weight: 700;
   text-align: center;
