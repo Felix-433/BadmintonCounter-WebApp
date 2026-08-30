@@ -203,8 +203,25 @@ button.primary {
 
 /* Live scoring */
 .top-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.side-switch-btn {
+  grid-column: 1;
+  justify-self: start;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
   display: flex;
+  align-items: center;
   justify-content: center;
+  background: var(--panel);
+  color: var(--text-dim);
+  border: 1px solid var(--panel-light);
+  border-radius: 999px;
+  font-size: 1.2rem;
 }
 
 .sets-summary {
@@ -243,6 +260,26 @@ button.primary {
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   min-height: 45vh;
+}
+
+/* Seitentausch (Fingertab oben links bzw. automatisch nach jedem Satz):
+   vertauscht nur die Bildschirmposition der Team-Felder, nicht Farbe/Zuordnung
+   von side-a/side-b — die bleibt an Team A/B gekoppelt (siehe app.js
+   sidesAreSwapped()). */
+.team-box.side-a {
+  order: 1;
+}
+
+.team-box.side-b {
+  order: 2;
+}
+
+.court.swapped .team-box.side-a {
+  order: 2;
+}
+
+.court.swapped .team-box.side-b {
+  order: 1;
 }
 
 /* Jedes Team-Feld ist fest in ein oberes Viertel (Aufschläger-Anzeige,

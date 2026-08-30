@@ -38,12 +38,6 @@
           </fieldset>
 
           <fieldset>
-            <legend>Wer schlägt zuerst auf?</legend>
-            <label class="radio"><input type="radio" name="first-server" value="A" checked> A</label>
-            <label class="radio"><input type="radio" name="first-server" value="B"> B</label>
-          </fieldset>
-
-          <fieldset>
             <legend>Zählweise</legend>
             <label class="radio"><input type="radio" name="modus" value="bis21" checked> bis 21 (Cap 30)</label>
             <label class="radio"><input type="radio" name="modus" value="bis15"> bis 15 (Cap 21)</label>
@@ -80,17 +74,23 @@
 
     <section id="view-live" class="view">
       <div class="top-row">
+        <button type="button" class="side-switch-btn" id="btn-side-switch" aria-label="Seiten tauschen" title="Seiten tauschen">⇄</button>
         <div class="sets-summary" id="sets-summary"></div>
       </div>
 
       <div id="new-set-prompt" class="new-set-banner hidden">
         <p id="new-set-title"></p>
-        <fieldset>
+        <fieldset id="new-set-first-server-fieldset">
+          <legend>Wer schlägt zuerst auf?</legend>
+          <label class="radio"><input type="radio" name="new-set-first-server" value="A" checked> <span id="new-set-first-server-a-name"></span></label>
+          <label class="radio"><input type="radio" name="new-set-first-server" value="B"> <span id="new-set-first-server-b-name"></span></label>
+        </fieldset>
+        <fieldset id="new-set-fieldset-a">
           <legend id="new-set-legend-a">Team A</legend>
           <label class="radio"><input type="radio" name="new-set-a" value="0" checked> <span id="new-set-a1-name"></span></label>
           <label class="radio"><input type="radio" name="new-set-a" value="1"> <span id="new-set-a2-name"></span></label>
         </fieldset>
-        <fieldset>
+        <fieldset id="new-set-fieldset-b">
           <legend id="new-set-legend-b">Team B</legend>
           <label class="radio"><input type="radio" name="new-set-b" value="0" checked> <span id="new-set-b1-name"></span></label>
           <label class="radio"><input type="radio" name="new-set-b" value="1"> <span id="new-set-b2-name"></span></label>
@@ -98,7 +98,7 @@
         <button type="button" class="primary" id="btn-new-set-confirm">Weiter</button>
       </div>
 
-      <div class="court">
+      <div class="court" id="court">
         <div class="team-box side-a">
           <button type="button" class="serve-zone" id="serve-a"></button>
           <button type="button" class="score-btn" id="btn-a">

@@ -39,6 +39,11 @@ const el = {
   setsSummary: document.getElementById('sets-summary'),
   newSetPrompt: document.getElementById('new-set-prompt'),
   newSetTitle: document.getElementById('new-set-title'),
+  newSetFirstServerFieldset: document.getElementById('new-set-first-server-fieldset'),
+  newSetFirstServerAName: document.getElementById('new-set-first-server-a-name'),
+  newSetFirstServerBName: document.getElementById('new-set-first-server-b-name'),
+  newSetFieldsetA: document.getElementById('new-set-fieldset-a'),
+  newSetFieldsetB: document.getElementById('new-set-fieldset-b'),
   newSetLegendA: document.getElementById('new-set-legend-a'),
   newSetLegendB: document.getElementById('new-set-legend-b'),
   newSetA1Name: document.getElementById('new-set-a1-name'),
@@ -46,6 +51,8 @@ const el = {
   newSetB1Name: document.getElementById('new-set-b1-name'),
   newSetB2Name: document.getElementById('new-set-b2-name'),
   btnNewSetConfirm: document.getElementById('btn-new-set-confirm'),
+  court: document.getElementById('court'),
+  btnSideSwitch: document.getElementById('btn-side-switch'),
   btnA: document.getElementById('btn-a'),
   btnB: document.getElementById('btn-b'),
   scoreA: document.getElementById('score-a'),
@@ -69,7 +76,7 @@ const el = {
  * @property {0|1} A - Index in playersA, wer bei Team A zu Beginn dieses Satzes im rechten Feld steht.
  * @property {0|1} B - Index in playersB, wer bei Team B zu Beginn dieses Satzes im rechten Feld steht.
  */
-/** @type {{spielerA:string, spielerB:string, playersA:?[string,string], playersB:?[string,string], firstServer:'A'|'B', matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[], rightCourtStart:RightCourtAssignment[]}|null} */
+/** @type {{spielerA:string, spielerB:string, playersA:?[string,string], playersB:?[string,string], firstServer:?('A'|'B'), matchType:'einzel'|'doppel', modus:'bis21'|'bis15', history:('A'|'B')[], rightCourtStart:RightCourtAssignment[], manualSwap:boolean}|null} */
 let match = null;
 
 function regelnFuerMatch() {
@@ -113,18 +120,63 @@ function currentSetIndex() {
   return computeState(match.history, regeln).saetze.length;
 }
 
+// Vor dem allerersten Punkt des Matches steht noch nicht fest, welches Team
+// aufschlägt (die frühere Auswahl im Setup-Formular wurde entfernt) — das
+// wird jetzt auf der Live-Seite selbst erfragt, siehe needsSetupPrompt.
+function needsFirstServerPrompt() {
+  return !match.firstServer;
+}
+
 // Beim Doppel schlägt pro Satz und Team immer nur eine bestimmte Person auf:
 // wer zu Satzbeginn im rechten Feld steht, wechselt sich nur innerhalb des
 // eigenen Aufschlags ab (rechts bei geradem, links bei ungeradem eigenem
 // Punktestand). Der/die Partner*in kommt erst im nächsten Satz wieder dran.
 // Deshalb muss vor jedem neuen Satz erfragt werden, wer diesmal rechts steht.
-function needsNewSetPrompt() {
+function needsRightCourtPrompt() {
   if (match.matchType !== 'doppel') return false;
   if (!match.playersA || !match.playersB) return false;
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
   if (getMatchWinner(saetze, regeln)) return false;
   return !match.rightCourtStart[saetze.length];
+}
+
+function needsSetupPrompt() {
+  return needsFirstServerPrompt() || needsRightCourtPrompt();
+}
+
+// Simuliert die rechts/links-Zuordnung beider Teams über einen Abschnitt der
+// flachen Punktehistorie hinweg, ausgehend von einer Startzuordnung (wer zu
+// Beginn dieses Abschnitts jeweils im rechten Feld stand). Die Position
+// wechselt pro Team nur, wenn dieses Team beim eigenen Aufschlag selbst
+// punktet (Aufschlag verteidigt) — punktet stattdessen die Gegenseite, bleibt
+// die Zuordnung unverändert. Wird sowohl für die Anzeige des aktuell
+// aufschlagenden Spielers (laufender Satz) als auch dafür gebraucht, die
+// Zuordnung am Ende eines bereits abgeschlossenen Satzes zu ermitteln (siehe
+// rightPositionAtSetEnd).
+function simulateRightPositions(assignment, startIdx, endIdx) {
+  const right = { A: assignment.A, B: assignment.B };
+  for (let i = startIdx; i < endIdx; i++) {
+    const scorer = match.history[i];
+    const server = i === 0 ? match.firstServer : match.history[i - 1];
+    if (scorer === server) right[scorer] = right[scorer] === 0 ? 1 : 0;
+  }
+  return right;
+}
+
+// Rechts/links-Zuordnung beider Teams am Ende eines bereits abgeschlossenen
+// Satzes (0-basierter Index in saetze). Wird beim Satzwechsel gebraucht, um
+// die Position des Teams, das NICHT neu gefragt wird (siehe
+// needsRightCourtPrompt/btnNewSetConfirm — ab Satz 2 steht das aufschlagende
+// Team ja schon fest), automatisch fortzuschreiben statt sie erneut abzufragen.
+function rightPositionAtSetEnd(setIdx) {
+  const regeln = regelnFuerMatch();
+  const { saetze } = computeState(match.history, regeln);
+  const assignment = match.rightCourtStart[setIdx];
+  let consumedBefore = 0;
+  for (let i = 0; i < setIdx; i++) consumedBefore += saetze[i].a + saetze[i].b;
+  const setLength = saetze[setIdx].a + saetze[setIdx].b;
+  return simulateRightPositions(assignment, consumedBefore, consumedBefore + setLength);
 }
 
 function currentServerPlayerName() {
@@ -136,28 +188,33 @@ function currentServerPlayerName() {
   const assignment = match.rightCourtStart[setIndex];
   if (!assignment) return null;
 
-  // Wer im rechten Feld steht, ist nicht einfach "gerade → Person X": die
-  // Position wechselt innerhalb des Satzes nur, wenn ein Team beim eigenen
-  // Aufschlag selbst punktet (Aufschlag verteidigt). Punktet stattdessen das
-  // gegnerische Team (Seitenwechsel), bleibt die Zuordnung unverändert, und
-  // die Person, die zum neuen Punktstand passt, schlägt auf. Deshalb wird
-  // hier der laufende Satz Punkt für Punkt nachsimuliert statt der aktuelle
-  // Stand direkt in eine feste rechts/links-Zuordnung übersetzt.
   let consumed = 0;
   for (const s of saetze) consumed += s.a + s.b;
-
-  const right = { A: assignment.A, B: assignment.B };
-  for (let i = consumed; i < match.history.length; i++) {
-    const scorer = match.history[i];
-    const server = i === 0 ? match.firstServer : match.history[i - 1];
-    if (scorer === server) right[scorer] = right[scorer] === 0 ? 1 : 0;
-  }
+  const right = simulateRightPositions(assignment, consumed, match.history.length);
 
   const serverTeam = currentServer();
   const score = serverTeam === 'A' ? current.a : current.b;
   const players = serverTeam === 'A' ? match.playersA : match.playersB;
   const servingIndex = score % 2 === 0 ? right[serverTeam] : 1 - right[serverTeam];
   return players[servingIndex];
+}
+
+// Nach jedem abgeschlossenen Satz wechseln die Teams laut Regelwerk die
+// Spielfeldseite; zusätzlich per Fingertab oben links jederzeit manuell
+// korrigierbar (z.B. falls die Teams real anders gewechselt haben). Beides
+// wirkt rein auf die Bildschirm-Darstellung (welches Team-Feld links/rechts
+// angezeigt wird) — nicht auf Punktestand, Aufschlag oder Team-Zuordnung.
+function sidesAreSwapped() {
+  const regeln = regelnFuerMatch();
+  const { saetze } = computeState(match.history, regeln);
+  const autoSwap = saetze.length % 2 === 1;
+  return autoSwap !== !!match.manualSwap;
+}
+
+function toggleSides() {
+  match.manualSwap = !match.manualSwap;
+  persistMatch();
+  renderLive();
 }
 
 // Tippen auf den Aufschlag-Badge tauscht, wer von den beiden
@@ -195,8 +252,14 @@ function renderLive() {
   const winsA = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'A').length;
   const winsB = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'B').length;
 
-  el.scoreA.textContent = current.a;
-  el.scoreB.textContent = current.b;
+  // Direkt nach Satzende (current wieder bei 0:0, aber schon ein Satz
+  // abgeschlossen) zeigt die Anzeige weiterhin das Ergebnis des gerade
+  // beendeten Satzes, statt kurz auf 0:0 zu springen — das gilt auch am
+  // Matchende (dann für immer, da danach nie wieder gepunktet wird).
+  const lastSet = saetze.length > 0 ? saetze[saetze.length - 1] : null;
+  const holdsLastSetScore = !!lastSet && current.a === 0 && current.b === 0;
+  el.scoreA.textContent = holdsLastSetScore ? lastSet.a : current.a;
+  el.scoreB.textContent = holdsLastSetScore ? lastSet.b : current.b;
 
   el.setsSummary.innerHTML = '';
   const pipsLine = document.createElement('div');
@@ -215,27 +278,58 @@ function renderLive() {
   }
 
   const matchWinner = getMatchWinner(saetze, regeln);
-  const showNewSetPrompt = !matchWinner && needsNewSetPrompt();
+  const showFirstServerPrompt = !matchWinner && needsFirstServerPrompt();
+  const showRightCourtPrompt = !matchWinner && needsRightCourtPrompt();
+  const showSetupPrompt = showFirstServerPrompt || showRightCourtPrompt;
 
-  if (showNewSetPrompt) {
-    el.newSetTitle.textContent = `Satz ${saetze.length + 1}: Wer steht im rechten Feld?`;
-    el.newSetLegendA.textContent = match.spielerA;
-    el.newSetLegendB.textContent = match.spielerB;
-    el.newSetA1Name.textContent = match.playersA[0];
-    el.newSetA2Name.textContent = match.playersA[1];
-    el.newSetB1Name.textContent = match.playersB[0];
-    el.newSetB2Name.textContent = match.playersB[1];
-    el.newSetPrompt.querySelectorAll('input[name="new-set-a"]').forEach((r) => { r.checked = r.value === '0'; });
-    el.newSetPrompt.querySelectorAll('input[name="new-set-b"]').forEach((r) => { r.checked = r.value === '0'; });
+  if (showSetupPrompt) {
+    const setIndex = saetze.length;
+    el.newSetTitle.textContent = setIndex === 0
+      ? 'Vor Satz 1'
+      : `Satz ${setIndex + 1}: Wer steht rechts im Feld?`;
+
+    el.newSetFirstServerFieldset.classList.toggle('hidden', !showFirstServerPrompt);
+    if (showFirstServerPrompt) {
+      el.newSetFirstServerAName.textContent = match.spielerA;
+      el.newSetFirstServerBName.textContent = match.spielerB;
+      el.newSetPrompt.querySelectorAll('input[name="new-set-first-server"]').forEach((r) => { r.checked = r.value === 'A'; });
+    }
+
+    if (showRightCourtPrompt) {
+      el.newSetLegendA.textContent = match.spielerA;
+      el.newSetLegendB.textContent = match.spielerB;
+      el.newSetA1Name.textContent = match.playersA[0];
+      el.newSetA2Name.textContent = match.playersA[1];
+      el.newSetB1Name.textContent = match.playersB[0];
+      el.newSetB2Name.textContent = match.playersB[1];
+      el.newSetPrompt.querySelectorAll('input[name="new-set-a"]').forEach((r) => { r.checked = r.value === '0'; });
+      el.newSetPrompt.querySelectorAll('input[name="new-set-b"]').forEach((r) => { r.checked = r.value === '0'; });
+
+      // Ab Satz 2 steht schon fest, wer aufschlägt (Gewinner-Team des
+      // Vorsatzes) — dann wird nur noch für dieses Team gefragt, wer rechts
+      // steht (siehe rightPositionAtSetEnd/btnNewSetConfirm für das andere Team).
+      let winnerSide = null;
+      if (setIndex > 0) {
+        const prevSet = saetze[setIndex - 1];
+        winnerSide = getSetWinner(prevSet.a, prevSet.b, regeln);
+      }
+      el.newSetFieldsetA.classList.toggle('hidden', winnerSide === 'B');
+      el.newSetFieldsetB.classList.toggle('hidden', winnerSide === 'A');
+    } else {
+      el.newSetFieldsetA.classList.add('hidden');
+      el.newSetFieldsetB.classList.add('hidden');
+    }
   }
-  el.newSetPrompt.classList.toggle('hidden', !showNewSetPrompt);
+  el.newSetPrompt.classList.toggle('hidden', !showSetupPrompt);
 
-  const server = matchWinner || showNewSetPrompt ? null : currentServer();
+  const server = matchWinner || showSetupPrompt ? null : currentServer();
   const serverPlayerName = server ? currentServerPlayerName() : null;
   renderServeZone(el.serveA, 'A', match.spielerA, server, serverPlayerName);
   renderServeZone(el.serveB, 'B', match.spielerB, server, serverPlayerName);
 
-  const controlsDisabled = !!matchWinner || showNewSetPrompt;
+  el.court.classList.toggle('swapped', sidesAreSwapped());
+
+  const controlsDisabled = !!matchWinner || showSetupPrompt;
   el.btnA.disabled = controlsDisabled;
   el.btnB.disabled = controlsDisabled;
   el.serveA.disabled = controlsDisabled;
@@ -251,8 +345,8 @@ function renderLive() {
   }
 }
 
-function startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA, playersB) {
-  match = { spielerA, spielerB, playersA, playersB, firstServer, matchType, modus, history: [], rightCourtStart: [] };
+function startMatch(spielerA, spielerB, matchType, modus, playersA, playersB) {
+  match = { spielerA, spielerB, playersA, playersB, firstServer: null, matchType, modus, history: [], rightCourtStart: [], manualSwap: false };
   persistMatch();
   showView('live');
   renderLive();
@@ -262,7 +356,7 @@ function scorePoint(scorer) {
   const regeln = regelnFuerMatch();
   const { saetze } = computeState(match.history, regeln);
   if (getMatchWinner(saetze, regeln)) return;
-  if (needsNewSetPrompt()) return;
+  if (needsSetupPrompt()) return;
   match.history.push(scorer);
   persistMatch();
   renderLive();
@@ -475,8 +569,7 @@ el.setupForm.addEventListener('submit', (e) => {
     playersB = [b1, b2];
   }
 
-  const firstServer = el.setupForm.querySelector('input[name="first-server"]:checked').value;
-  startMatch(spielerA, spielerB, firstServer, matchType, modus, playersA, playersB);
+  startMatch(spielerA, spielerB, matchType, modus, playersA, playersB);
   el.setupForm.reset();
   updateMatchTypeUI();
 });
@@ -524,11 +617,39 @@ el.serveB.addEventListener('click', () => {
   toggleServerPlayer('B');
 });
 el.btnNewSetConfirm.addEventListener('click', () => {
-  const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
-  const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
-  match.rightCourtStart[currentSetIndex()] = { A: aIndex, B: bIndex };
+  if (needsFirstServerPrompt()) {
+    match.firstServer = el.newSetPrompt.querySelector('input[name="new-set-first-server"]:checked').value;
+  }
+
+  if (needsRightCourtPrompt()) {
+    const setIndex = currentSetIndex();
+    if (setIndex === 0) {
+      const aIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-a"]:checked').value);
+      const bIndex = Number(el.newSetPrompt.querySelector('input[name="new-set-b"]:checked').value);
+      match.rightCourtStart[setIndex] = { A: aIndex, B: bIndex };
+    } else {
+      // Ab Satz 2 wurde nur das aufschlagende Team (Gewinner des Vorsatzes)
+      // gefragt — die Position des anderen Teams wird von dessen Stand am
+      // Ende des vorigen Satzes übernommen (siehe rightPositionAtSetEnd).
+      const regeln = regelnFuerMatch();
+      const { saetze } = computeState(match.history, regeln);
+      const prevSet = saetze[setIndex - 1];
+      const winnerSide = getSetWinner(prevSet.a, prevSet.b, regeln);
+      const loserSide = winnerSide === 'A' ? 'B' : 'A';
+      const askedIndex = Number(el.newSetPrompt.querySelector(`input[name="new-set-${winnerSide.toLowerCase()}"]:checked`).value);
+      const carriedIndex = rightPositionAtSetEnd(setIndex - 1)[loserSide];
+      match.rightCourtStart[setIndex] = winnerSide === 'A'
+        ? { A: askedIndex, B: carriedIndex }
+        : { A: carriedIndex, B: askedIndex };
+    }
+  }
+
   persistMatch();
   renderLive();
+});
+el.btnSideSwitch.addEventListener('click', () => {
+  if (lastPointerWasMouse) return;
+  toggleSides();
 });
 // Undo/Abbrechen/Speichern per Maus lösen bewusst NICHT ihre Aktion aus,
 // sondern zählen wie jeder andere Mausklick nur einen Punkt (siehe
@@ -859,8 +980,13 @@ match = loadMatch();
 if (match) {
   // Ältere gespeicherte Matches (vor Einführung der Aufschlagsposition beim
   // Doppel) haben noch kein rightCourtStart-Feld — ohne Nachrüsten würde
-  // needsNewSetPrompt() beim Zugriff darauf abstürzen.
+  // needsRightCourtPrompt() beim Zugriff darauf abstürzen.
   if (!Array.isArray(match.rightCourtStart)) match.rightCourtStart = [];
+  // Ältere gespeicherte Matches (vor Einführung des Seitentauschs) haben noch
+  // kein manualSwap-Feld — Fehlen ist gleichwertig zu false (kein manueller
+  // Tausch), muss hier aber nicht zwingend nachgerüstet werden, macht die
+  // Absicht im gespeicherten Zustand aber expliziter.
+  if (typeof match.manualSwap !== 'boolean') match.manualSwap = false;
   showView('live');
   renderLive();
 } else {

@@ -170,6 +170,32 @@ Satzstart-Abfrage versehentlich die falsche Aufstellung gewählt wurde oder
 sich das Team real anders hingestellt hat. Der Punktestand bleibt dabei
 unverändert.
 
+## Aufschlag & Aufstellung festlegen
+
+Wer zuerst aufschlägt, wird nicht mehr im Setup-Formular gewählt, sondern
+direkt oben auf der Live-Seite abgefragt, sobald das Match gestartet ist —
+zusammen mit (beim Doppel) der Frage, wer je Team im rechten Feld steht.
+Punkte lassen sich erst zählen, nachdem diese Abfrage mit "Weiter" bestätigt
+wurde.
+
+Ab dem 2. Satz steht das aufschlagende Team schon fest (Gewinner des
+Vorsatzes) — die Abfrage fragt dann beim Doppel nur noch, wer aus diesem
+Team rechts steht; die Position des anderen Teams wird automatisch aus
+dessen Stand am Ende des Vorsatzes übernommen.
+
+Beim Satzende bleibt der Punktestand des gerade beendeten Satzes stehen
+(kein kurzes Aufblitzen von 0:0), bis die Satzwechsel-Abfrage bestätigt
+wurde bzw. (am Matchende) dauerhaft.
+
+## Seitenwechsel
+
+Oben links auf der Live-Seite tauscht der ⇄-Button per Fingertap, welches
+Team-Feld links bzw. rechts angezeigt wird — reine Bildschirm-Darstellung,
+Punktestand/Aufschlag/Team-Zuordnung bleiben unverändert. Nach jedem
+abgeschlossenen Satz wechselt die Darstellung zusätzlich automatisch (wie im
+echten Match der Seitenwechsel), lässt sich über den Button aber jederzeit
+manuell korrigieren.
+
 ## Icons
 
 Die PWA-Icons unter `icons/` sind einfarbige Platzhalter, erzeugt durch:
