@@ -189,7 +189,7 @@ wurde bzw. (am Matchende) dauerhaft.
 
 ## Seitenwechsel
 
-Oben links auf der Live-Seite tauscht der ⇄-Button per Fingertap, welches
+Oben links auf der Live-Seite tauscht der "SEITENWECHSEL"-Button per Fingertap, welches
 Team-Feld links bzw. rechts angezeigt wird — reine Bildschirm-Darstellung,
 Punktestand/Aufschlag/Team-Zuordnung bleiben unverändert. Nach jedem
 abgeschlossenen Satz wechselt die Darstellung zusätzlich automatisch (wie im

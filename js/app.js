@@ -973,6 +973,21 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
+  // Übernimmt ein neuer Service Worker die Kontrolle (z.B. weil im
+  // Hintergrund eine neue Version deployt wurde, während die App schon
+  // offen war), lädt diese Instanz automatisch einmal neu. Ohne das würde
+  // eine bereits geöffnete App weiter mit dem alten, längst im Speicher
+  // geladenen JS laufen — der Service Worker selbst wäre zwar aktuell,
+  // aber die laufende Seite hätte den Code-Stand vom letzten Laden. Das
+  // laufende Match geht dabei nicht verloren (liegt in localStorage).
+  // refreshing schützt vor einer Reload-Schleife, falls controllerchange
+  // mehrfach feuert.
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
 }
 
 // Init
