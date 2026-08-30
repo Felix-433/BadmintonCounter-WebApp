@@ -280,28 +280,33 @@ function renderLive() {
 
   // Satzstand-Tabelle: Team-Name links, daneben je Spalte der Punktestand
   // eines abgeschlossenen Satzes — Team A oben, Team B positionsgenau
-  // darunter in derselben Spalte (siehe .sets-row { display: contents }).
-  // Der laufende, noch nicht abgeschlossene Satz taucht hier nicht auf (der
-  // steht groß in den Team-Feldern) und vor dem ersten Satzende bleibt die
-  // Tabelle leer.
+  // darunter in derselben Spalte. Jede Zelle bekommt ihre Grid-Position
+  // (Zeile/Spalte) explizit gesetzt statt sich auf die Dokumentreihenfolge
+  // zu verlassen — sonst rutschen bei weniger als 3 abgeschlossenen Sätzen
+  // Team Bs Zellen in dieselbe Zeile wie Team As (die Auto-Platzierung
+  // füllt Zeilen zeilenweise auf, unabhängig davon, welches Team welche
+  // Zelle "gemeint" hat). Der laufende, noch nicht abgeschlossene Satz
+  // taucht hier nicht auf (der steht groß in den Team-Feldern) und vor dem
+  // ersten Satzende bleibt die Tabelle leer.
   el.setsSummary.innerHTML = '';
   if (saetze.length > 0) {
     const table = document.createElement('div');
     table.className = 'sets-table';
-    [['A', match.spielerA], ['B', match.spielerB]].forEach(([side, name]) => {
-      const row = document.createElement('div');
-      row.className = 'sets-row';
+    [[0, 'A', match.spielerA], [1, 'B', match.spielerB]].forEach(([row, side, name]) => {
       const label = document.createElement('span');
       label.className = 'sets-team-label';
+      label.style.gridRow = String(row + 1);
+      label.style.gridColumn = '1';
       label.textContent = name;
-      row.appendChild(label);
-      saetze.forEach((s) => {
+      table.appendChild(label);
+      saetze.forEach((s, i) => {
         const cell = document.createElement('span');
         cell.className = 'sets-score';
+        cell.style.gridRow = String(row + 1);
+        cell.style.gridColumn = String(i + 2);
         cell.textContent = side === 'A' ? s.a : s.b;
-        row.appendChild(cell);
+        table.appendChild(cell);
       });
-      table.appendChild(row);
     });
     el.setsSummary.appendChild(table);
   }

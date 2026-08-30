@@ -239,14 +239,6 @@ button.primary {
   font-size: 0.85rem;
 }
 
-/* display: contents lässt die Zellen einer Zeile direkt im Grid des
-   Elternelements landen, statt eine eigene Zeile aufzuspannen — nur so
-   bleiben die Punktestand-Spalten von Team A und Team B exakt
-   übereinander ausgerichtet. */
-.sets-row {
-  display: contents;
-}
-
 .sets-team-label {
   text-align: left;
   color: var(--text-dim);
