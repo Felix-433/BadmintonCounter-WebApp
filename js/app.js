@@ -261,9 +261,6 @@ function renderServeZone(zoneEl, side, teamName, server, serverPlayerName) {
 function renderLive() {
   const regeln = regelnFuerMatch();
   const { saetze, current } = computeState(match.history, regeln);
-  const winsA = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'A').length;
-  const winsB = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'B').length;
-
   const matchWinner = getMatchWinner(saetze, regeln);
   const showFirstServerPrompt = !matchWinner && needsFirstServerPrompt();
   const showRightCourtPrompt = !matchWinner && needsRightCourtPrompt();
@@ -281,20 +278,32 @@ function renderLive() {
   el.scoreA.textContent = holdsLastSetScore ? lastSet.a : current.a;
   el.scoreB.textContent = holdsLastSetScore ? lastSet.b : current.b;
 
+  // Satzstand-Tabelle: Team-Name links, daneben je Spalte der Punktestand
+  // eines abgeschlossenen Satzes — Team A oben, Team B positionsgenau
+  // darunter in derselben Spalte (siehe .sets-row { display: contents }).
+  // Der laufende, noch nicht abgeschlossene Satz taucht hier nicht auf (der
+  // steht groß in den Team-Feldern) und vor dem ersten Satzende bleibt die
+  // Tabelle leer.
   el.setsSummary.innerHTML = '';
-  const pipsLine = document.createElement('div');
-  pipsLine.className = 'sets-pips';
-  pipsLine.innerHTML = `
-    <span class="pip-team" aria-label="${winsA} von 2 Sätzen gewonnen">${'●'.repeat(winsA)}${'○'.repeat(2 - winsA)}</span>
-    <span class="pip-label">Sätze</span>
-    <span class="pip-team" aria-label="${winsB} von 2 Sätzen gewonnen">${'●'.repeat(winsB)}${'○'.repeat(2 - winsB)}</span>
-  `;
-  el.setsSummary.appendChild(pipsLine);
   if (saetze.length > 0) {
-    const detail = document.createElement('div');
-    detail.className = 'sets-detail';
-    detail.textContent = saetze.map((s) => `${s.a}:${s.b}`).join('  ·  ');
-    el.setsSummary.appendChild(detail);
+    const table = document.createElement('div');
+    table.className = 'sets-table';
+    [['A', match.spielerA], ['B', match.spielerB]].forEach(([side, name]) => {
+      const row = document.createElement('div');
+      row.className = 'sets-row';
+      const label = document.createElement('span');
+      label.className = 'sets-team-label';
+      label.textContent = name;
+      row.appendChild(label);
+      saetze.forEach((s) => {
+        const cell = document.createElement('span');
+        cell.className = 'sets-score';
+        cell.textContent = side === 'A' ? s.a : s.b;
+        row.appendChild(cell);
+      });
+      table.appendChild(row);
+    });
+    el.setsSummary.appendChild(table);
   }
 
   if (showSetupPrompt) {
