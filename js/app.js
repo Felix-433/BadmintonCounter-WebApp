@@ -915,15 +915,15 @@ document.addEventListener('keydown', (e) => {
 // beziehen sich auf die Beschriftung des getesteten Gamepads, siehe README
 // "Fernbedienung (Gamepad)" — bei anderen Modellen ggf. mit
 // gamepad-test.html neu abgleichen.
+// Tasten B und X bewusst nicht belegt (Wunsch: nur A/Y zählen Punkte, B/X
+// bleiben ohne Funktion — Versehen beim Greifen des Gamepads reduzieren).
 const GAMEPAD_SCORE_MAP = [
   [0, 'A'], // Taste A
-  [2, 'A'], // Taste X
-  [1, 'B'], // Taste B
   [3, 'B'], // Taste Y
 ];
 const GAMEPAD_REMOVE_MAP = [
-  [14, 'A'], // Pfeil links: letzten Punkt von Team A abziehen
-  [15, 'B'], // Pfeil rechts: letzten Punkt von Team B abziehen
+  [14, 'B'], // Pfeil links: letzten Punkt von Team B abziehen
+  [15, 'A'], // Pfeil rechts: letzten Punkt von Team A abziehen
 ];
 // Aktionstasten ohne Seiten-Payload — jeweils eine parameterlose Funktion,
 // siehe pollGamepadButtonGroup unten.

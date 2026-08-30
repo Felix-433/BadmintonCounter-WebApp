@@ -132,11 +132,11 @@ nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
 | Taste am Gamepad (Bezeichnung/Beschriftung) | Button-Index | Aktion |
 | --- | --- | --- |
 | A | 0 | Punkt für Team A |
-| X | 2 | Punkt für Team A |
-| B | 1 | Punkt für Team B |
 | Y | 3 | Punkt für Team B |
-| Pfeil ← (links) | 14 | Letzten Punkt **von Team A** zurückziehen |
-| Pfeil → (rechts) | 15 | Letzten Punkt **von Team B** zurückziehen |
+| X | 2 | deaktiviert |
+| B | 1 | deaktiviert |
+| Pfeil ← (links) | 14 | Letzten Punkt **von Team B** zurückziehen |
+| Pfeil → (rechts) | 15 | Letzten Punkt **von Team A** zurückziehen |
 | kleine Taste „−“ | 8 | Undo (letzter Punkt, egal von wem) |
 | kleine Taste „+“ | 9 | Match abbrechen (fragt wie gewohnt per Bestätigungsdialog nach) |
 | Pfeil ↑ (oben) | 12 | Aufschläger*in Team A tauschen |
@@ -145,10 +145,11 @@ nötig — läuft über die iOS/iPadOS-Bluetooth-Kopplung):
 
 Die Seitentasten (L/R) sind bewusst deaktiviert: am getesteten Gamepad reagierten
 sie spürbar verzögert, während die übrigen Tasten oben verzögerungsfrei
-zählten. Die Bezeichnungen und Button-Indizes oben gelten für das getestete
-Gamepad-Modell — der Index folgt zwar dem W3C-Standardmapping, ist bei
-anderen Gamepad-Modellen aber nicht garantiert identisch belegt. Im Zweifel
-mit
+zählten. B und X sind zusätzlich bewusst ohne Funktion, damit nur noch A
+(Team A) und Y (Team B) Punkte zählen. Die Bezeichnungen und Button-Indizes
+oben gelten für das getestete Gamepad-Modell — der Index folgt zwar dem
+W3C-Standardmapping, ist bei anderen Gamepad-Modellen aber nicht garantiert
+identisch belegt. Im Zweifel mit
 `gamepad-test.html` (Diagnose-Seite im Repo-Root, nicht Teil der
 eigentlichen App) die tatsächliche Belegung des jeweiligen Geräts prüfen.
 
