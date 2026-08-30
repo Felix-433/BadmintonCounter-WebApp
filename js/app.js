@@ -315,7 +315,7 @@ function renderLive() {
     const setIndex = saetze.length;
     el.newSetTitle.textContent = setIndex === 0
       ? 'Vor Satz 1'
-      : `Satz ${setIndex + 1}: Wer steht rechts im Feld?`;
+      : `Satz ${setIndex + 1}: Wer hat Aufschlag?`;
 
     el.newSetFirstServerFieldset.classList.toggle('hidden', !showFirstServerPrompt);
     if (showFirstServerPrompt) {
