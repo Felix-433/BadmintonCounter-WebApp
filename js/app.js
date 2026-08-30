@@ -215,10 +215,11 @@ function currentServerPlayerName() {
 // korrigierbar (z.B. falls die Teams real anders gewechselt haben). Beides
 // wirkt rein auf die Bildschirm-Darstellung (welches Team-Feld links/rechts
 // angezeigt wird) — nicht auf Punktestand, Aufschlag oder Team-Zuordnung.
-function sidesAreSwapped() {
-  const regeln = regelnFuerMatch();
-  const { saetze } = computeState(match.history, regeln);
-  const autoSwap = saetze.length % 2 === 1;
+// confirmedSetCount zählt nur Sätze, deren Satzwechsel-Dialog (falls nötig)
+// schon mit "Weiter" bestätigt wurde — siehe renderLive: solange der Dialog
+// noch offen ist, bleibt die Anzeige auf dem Stand des vorigen Satzes.
+function sidesAreSwapped(confirmedSetCount) {
+  const autoSwap = confirmedSetCount % 2 === 1;
   return autoSwap !== !!match.manualSwap;
 }
 
@@ -263,12 +264,20 @@ function renderLive() {
   const winsA = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'A').length;
   const winsB = saetze.filter((s) => getSetWinner(s.a, s.b, regeln) === 'B').length;
 
-  // Direkt nach Satzende (current wieder bei 0:0, aber schon ein Satz
-  // abgeschlossen) zeigt die Anzeige weiterhin das Ergebnis des gerade
-  // beendeten Satzes, statt kurz auf 0:0 zu springen — das gilt auch am
-  // Matchende (dann für immer, da danach nie wieder gepunktet wird).
+  const matchWinner = getMatchWinner(saetze, regeln);
+  const showFirstServerPrompt = !matchWinner && needsFirstServerPrompt();
+  const showRightCourtPrompt = !matchWinner && needsRightCourtPrompt();
+  const showSetupPrompt = showFirstServerPrompt || showRightCourtPrompt;
+
+  // Seitenwechsel und Punktestand-Anzeige hängen am selben Zeitpunkt: dem
+  // Bestätigen des Satzwechsel-Dialogs per "Weiter" (falls einer nötig ist —
+  // z.B. beim Einzel ab Satz 2 nicht). Solange der Dialog noch offen ist,
+  // bleiben beide auf dem Stand des gerade beendeten Satzes stehen, statt
+  // Seiten und Punktestand unabhängig voneinander umzuspringen. Am Matchende
+  // gilt das für immer (dann wird nie wieder gepunktet).
+  const confirmedSetCount = showSetupPrompt ? Math.max(0, saetze.length - 1) : saetze.length;
   const lastSet = saetze.length > 0 ? saetze[saetze.length - 1] : null;
-  const holdsLastSetScore = !!lastSet && current.a === 0 && current.b === 0;
+  const holdsLastSetScore = !!lastSet && current.a === 0 && current.b === 0 && (!!matchWinner || showSetupPrompt);
   el.scoreA.textContent = holdsLastSetScore ? lastSet.a : current.a;
   el.scoreB.textContent = holdsLastSetScore ? lastSet.b : current.b;
 
@@ -287,11 +296,6 @@ function renderLive() {
     detail.textContent = saetze.map((s) => `${s.a}:${s.b}`).join('  ·  ');
     el.setsSummary.appendChild(detail);
   }
-
-  const matchWinner = getMatchWinner(saetze, regeln);
-  const showFirstServerPrompt = !matchWinner && needsFirstServerPrompt();
-  const showRightCourtPrompt = !matchWinner && needsRightCourtPrompt();
-  const showSetupPrompt = showFirstServerPrompt || showRightCourtPrompt;
 
   if (showSetupPrompt) {
     const setIndex = saetze.length;
@@ -342,7 +346,7 @@ function renderLive() {
   renderServeZone(el.serveA, 'A', match.spielerA, server, serverPlayerName);
   renderServeZone(el.serveB, 'B', match.spielerB, server, serverPlayerName);
 
-  el.court.classList.toggle('swapped', sidesAreSwapped());
+  el.court.classList.toggle('swapped', sidesAreSwapped(confirmedSetCount));
 
   const controlsDisabled = !!matchWinner || showSetupPrompt;
   el.btnA.disabled = controlsDisabled;
