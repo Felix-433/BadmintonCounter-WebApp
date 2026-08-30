@@ -145,6 +145,17 @@ function needsSetupPrompt() {
   return needsFirstServerPrompt() || needsRightCourtPrompt();
 }
 
+// Vor Satz 1 wird die Spieler-Auswahl ("wer hat Aufschlag") nur für das
+// oben gerade gewählte aufschlagende Team eingeblendet — reagiert live auf
+// die Team-Auswahl (change-Listener unten), ohne renderLive() aufzurufen
+// (das würde die Radio-Auswahl auf den render()-Default zurücksetzen).
+function updateFirstSetServerFieldsetVisibility() {
+  const checked = el.newSetPrompt.querySelector('input[name="new-set-first-server"]:checked');
+  const servingSide = checked ? checked.value : 'A';
+  el.newSetFieldsetA.classList.toggle('hidden', servingSide === 'B');
+  el.newSetFieldsetB.classList.toggle('hidden', servingSide === 'A');
+}
+
 // Simuliert die rechts/links-Zuordnung beider Teams über einen Abschnitt der
 // flachen Punktehistorie hinweg, ausgehend von einer Startzuordnung (wer zu
 // Beginn dieses Abschnitts jeweils im rechten Feld stand). Die Position
@@ -305,16 +316,20 @@ function renderLive() {
       el.newSetPrompt.querySelectorAll('input[name="new-set-a"]').forEach((r) => { r.checked = r.value === '0'; });
       el.newSetPrompt.querySelectorAll('input[name="new-set-b"]').forEach((r) => { r.checked = r.value === '0'; });
 
-      // Ab Satz 2 steht schon fest, wer aufschlägt (Gewinner-Team des
-      // Vorsatzes) — dann wird nur noch für dieses Team gefragt, wer rechts
-      // steht (siehe rightPositionAtSetEnd/btnNewSetConfirm für das andere Team).
-      let winnerSide = null;
+      // Gefragt wird immer nur das aufschlagende Team, wer (im rechten
+      // Feld stehend) zuerst aufschlägt — vor Satz 1 das oben gewählte
+      // Team (siehe updateFirstSetServerFieldsetVisibility, reagiert live
+      // auf die Team-Auswahl), ab Satz 2 automatisch das Gewinner-Team des
+      // Vorsatzes (siehe rightPositionAtSetEnd/btnNewSetConfirm für das
+      // andere Team).
       if (setIndex > 0) {
         const prevSet = saetze[setIndex - 1];
-        winnerSide = getSetWinner(prevSet.a, prevSet.b, regeln);
+        const winnerSide = getSetWinner(prevSet.a, prevSet.b, regeln);
+        el.newSetFieldsetA.classList.toggle('hidden', winnerSide === 'B');
+        el.newSetFieldsetB.classList.toggle('hidden', winnerSide === 'A');
+      } else {
+        updateFirstSetServerFieldsetVisibility();
       }
-      el.newSetFieldsetA.classList.toggle('hidden', winnerSide === 'B');
-      el.newSetFieldsetB.classList.toggle('hidden', winnerSide === 'A');
     } else {
       el.newSetFieldsetA.classList.add('hidden');
       el.newSetFieldsetB.classList.add('hidden');
@@ -615,6 +630,9 @@ el.serveA.addEventListener('click', () => {
 el.serveB.addEventListener('click', () => {
   if (lastPointerWasMouse) return;
   toggleServerPlayer('B');
+});
+el.newSetPrompt.querySelectorAll('input[name="new-set-first-server"]').forEach((r) => {
+  r.addEventListener('change', updateFirstSetServerFieldsetVisibility);
 });
 el.btnNewSetConfirm.addEventListener('click', () => {
   if (needsFirstServerPrompt()) {
