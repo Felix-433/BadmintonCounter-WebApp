@@ -1,0 +1,173 @@
+<title>Tastatur-Test — BadmintonCounter</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Reines Diagnose-Werkzeug zum Identifizieren von Tastencodes, die ein
+  zusätzliches Eingabegerät (z.B. Bluetooth-"Ring"/Scroller wie der Stouchi
+  CGC004) als Tastatur-Events an den Browser sendet. Ist NICHT Teil der
+  eigentlichen App: nicht in index.html verlinkt, nicht in sw.js
+  SHELL_ASSETS gelistet, läuft also nicht offline und braucht deshalb auch
+  keinen CACHE_NAME-Bump beim Ändern. Kann nach Gebrauch einfach wieder
+  gelöscht werden.
+
+  Zweck: Gerät per Bluetooth koppeln, diese Seite fokussieren, dann jede
+  Taste/Geste am Gerät einmal auslösen und im Event-Log ablesen, welche(s)
+  event.key / event.code / keyCode dabei feuert — das ist die Grundlage,
+  um in js/app.js (siehe keydown-Listener dort) eine feste Zuordnung
+  "Taste → Aktion" zu programmieren, analog zu gamepad-test.html für
+  Bluetooth-Gamepads.
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #14171c;
+    --panel: #1e2229;
+    --border: #333a45;
+    --text: #e7eaf0;
+    --muted: #8b93a3;
+    --accent: #4da3ff;
+    --active: #35d07f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+  }
+  h1 { font-size: 1.2rem; margin: 0 0 4px; }
+  p.hint { color: var(--muted); margin: 0 0 16px; line-height: 1.4; }
+  .status {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  .status.active { border-color: var(--active); }
+  h2 { font-size: 1rem; margin: 20px 0 8px; }
+  .last-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .last-cell {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .last-cell .label { display: block; font-size: 0.7rem; color: var(--muted); }
+  .last-cell .value { display: block; font-size: 1.05rem; font-weight: 700; word-break: break-all; }
+  #log {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  #log li {
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  #log li:last-child { border-bottom: none; }
+  #log li.up { color: var(--muted); }
+  #log li.repeat { color: var(--accent); }
+  button.clear-log {
+    margin: 8px 0 0;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+</style>
+
+<h1>⌨️ Tastatur-Test</h1>
+<p class="hint">
+  Gerät (z.B. Stouchi CGC004) per Bluetooth koppeln, dann irgendwo auf diese
+  Seite tippen/klicken, damit sie den Tastatur-Fokus hat. Danach jede
+  Taste/Geste am Gerät einmal auslösen. Im Event-Log erscheinen
+  <code>key</code> (das für die Zuordnung in <code>js/app.js</code>
+  relevante Feld), <code>code</code> und <code>keyCode</code> (veraltet,
+  nur zur Kontrolle) sowie evtl. gedrückte Modifier-Tasten.
+</p>
+
+<div id="status" class="status">Noch kein Tastatur-Event empfangen — Seite fokussieren und Gerät bedienen.</div>
+
+<h2>Letztes Event</h2>
+<div class="last-grid">
+  <div class="last-cell"><span class="label">key</span><span class="value" id="lastKey">–</span></div>
+  <div class="last-cell"><span class="label">code</span><span class="value" id="lastCode">–</span></div>
+  <div class="last-cell"><span class="label">keyCode</span><span class="value" id="lastKeyCode">–</span></div>
+  <div class="last-cell"><span class="label">Modifier</span><span class="value" id="lastMods">–</span></div>
+</div>
+
+<h2>Event-Log</h2>
+<ul id="log"></ul>
+<button class="clear-log" id="clearLog">Log leeren</button>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+  const lastKeyEl = document.getElementById('lastKey');
+  const lastCodeEl = document.getElementById('lastCode');
+  const lastKeyCodeEl = document.getElementById('lastKeyCode');
+  const lastModsEl = document.getElementById('lastMods');
+  document.getElementById('clearLog').addEventListener('click', () => { logEl.innerHTML = ''; });
+
+  function log(text, cls) {
+    const li = document.createElement('li');
+    if (cls) li.className = cls;
+    const t = new Date();
+    const ts = [t.getHours(), t.getMinutes(), t.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':')
+      + '.' + String(t.getMilliseconds()).padStart(3, '0');
+    li.textContent = `${ts}  ${text}`;
+    logEl.insertBefore(li, logEl.firstChild);
+    // Log nicht unbegrenzt wachsen lassen.
+    while (logEl.children.length > 300) logEl.removeChild(logEl.lastChild);
+  }
+
+  function modsOf(e) {
+    const mods = [];
+    if (e.ctrlKey) mods.push('Ctrl');
+    if (e.shiftKey) mods.push('Shift');
+    if (e.altKey) mods.push('Alt');
+    if (e.metaKey) mods.push('Meta');
+    return mods.length ? mods.join('+') : '(keine)';
+  }
+
+  function handle(e, kind) {
+    statusEl.className = 'status active';
+    statusEl.textContent = `Zuletzt: ${kind} — "${e.key}"`;
+
+    lastKeyEl.textContent = e.key;
+    lastCodeEl.textContent = e.code || '(leer)';
+    lastKeyCodeEl.textContent = e.keyCode;
+    lastModsEl.textContent = modsOf(e);
+
+    const cls = kind === 'keyup' ? 'up' : (e.repeat ? 'repeat' : undefined);
+    const repeatNote = e.repeat ? ' [repeat]' : '';
+    log(`${kind}  key="${e.key}"  code="${e.code || '(leer)'}"  keyCode=${e.keyCode}  mods=${modsOf(e)}${repeatNote}`, cls);
+  }
+
+  window.addEventListener('keydown', (e) => handle(e, 'keydown'));
+  window.addEventListener('keyup', (e) => handle(e, 'keyup'));
+
+  // Manche Bluetooth-"Ring"/Scroll-Geräte senden statt Tastatur-Events auch
+  // Wheel- oder Pointer-Events (HID-Mausrad-Emulation). Sicherheitshalber
+  // mitloggen, falls am Gerät nichts im Tastatur-Log auftaucht.
+  window.addEventListener('wheel', (e) => {
+    log(`wheel  deltaX=${e.deltaX.toFixed(1)}  deltaY=${e.deltaY.toFixed(1)}  deltaMode=${e.deltaMode}`);
+  }, { passive: true });
+</script>
