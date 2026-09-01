@@ -834,31 +834,15 @@ document.addEventListener('wheel', (e) => {
   e.preventDefault();
 }, { passive: false });
 
-// Tastatur-/Presenter-Fernbedienung: Bluetooth-Clicker melden sich als
-// normale Tastatur an und senden beim Klick Pfeiltasten bzw. Bild-Auf/-Ab
-// (je nach Modell). Nur aktiv während des Live-Scorings, und nicht während
-// in ein Textfeld getippt wird.
-//
-// Seitenspezifisches Abziehen per Presenter-Taste (Halten, Doppel-Druck,
-// Tab-Kombi, Umbelegung auf eigene Tasten) wurde ausführlich mit zwei
-// Geräten (Norwii N95 Plus, Logitech R500s) auf dem iPad durchprobiert und
-// als nicht praktikabel verworfen — beide senden dort beim Halten kein
-// browserseitig sichtbares Signal (die Logitech-Umbelegung läuft nur über
-// die Logi-Options+-Software auf einem PC, die es für iPadOS nicht gibt).
-// Für seitenspezifisches Abziehen auf dem iPad stattdessen die
-// Maus-Fernbedienung nutzen (siehe unten) oder den ↶ Undo-Button.
+// Tastatur-Fernbedienung: nur aktiv während des Live-Scorings, und nicht
+// während in ein Textfeld getippt wird.
 //
 // Enter ist komplett deaktiviert (preventDefault, keine Aktion): sonst
 // aktiviert Enter das zuletzt fokussierte Element neu — z.B. einen gerade
 // angeklickten Score-Button — und gibt so ungewollt einen zusätzlichen
 // Punkt.
-function arrowKeySide(key) {
-  if (key === 'ArrowLeft' || key === 'PageUp') return 'A';
-  if (key === 'ArrowRight' || key === 'PageDown') return 'B';
-  return null;
-}
 
-// Zusätzliches Eingabegerät "Stouchi CGC004" (Bluetooth-Fernbedienung mit 4
+// Eingabegerät "Stouchi CGC004" (Bluetooth-Fernbedienung mit 4
 // Tasten) — Tastencodes per tastatur-test.html ermittelt: die 4 Tasten
 // senden die Ziffern 1/2/4 sowie (die vierte, physisch unbeschriftete
 // Taste) die Leertaste statt "0". Belegung wie gewünscht seitenspezifisch:
@@ -877,14 +861,6 @@ function stouchiKeyAction(key) {
 document.addEventListener('keydown', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-  const side = arrowKeySide(e.key);
-  if (side) {
-    e.preventDefault();
-    if (e.repeat) return;
-    scorePoint(side);
-    return;
-  }
 
   const stouchiAction = stouchiKeyAction(e.key);
   if (stouchiAction) {

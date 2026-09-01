@@ -63,30 +63,32 @@ kann GitHub Pages ohne Build-Schritt direkt von `main` deployen.
 `server.js`/`src/`/`scripts/`/`data/` liegen daneben und sind rein optional
 für die lokale Entwicklung.
 
-## Fernbedienung (Bluetooth-Clicker)
+## Fernbedienung (Stouchi CGC004)
 
-Während des Live-Scorings reagiert die App auf Tastatur-Events, damit sich
-ein Bluetooth-Presenter-Clicker (meldet sich als normale Tastatur an) als
-Fernbedienung nutzen lässt, ohne das Handy anzufassen:
+Während des Live-Scorings reagiert die App auf Tastatur-Events des Stouchi
+CGC004 (Bluetooth-Ring mit 4 Tasten, meldet sich als normale Tastatur an).
+Tastencodes per `tastatur-test.html` (Diagnose-Seite im Repo-Root, nicht
+Teil der eigentlichen App) ermittelt:
 
-| Taste                        | Aktion |
-| ----------------------------- | ------ |
-| `←` (Pfeil links) / `Bild ↑`  | Punkt für Team A |
-| `→` (Pfeil rechts) / `Bild ↓` | Punkt für Team B |
-| `Rücktaste`                   | Undo (letzter Punkt, egal von wem) |
-| `Enter`                       | deaktiviert — Browser aktivieren beim Enter-Druck sonst das zuletzt fokussierte Element neu (z.B. einen gerade angeklickten Score-Button) und geben so ungewollt einen zusätzlichen Punkt |
+| Taste am Ring | gesendeter Tastencode | Aktion |
+| -------------- | ---------------------- | ------ |
+| „2"            | `2`                     | Punkt für Team A |
+| „0" (4. Taste, physisch unbeschriftet) | Leertaste | Punkt für Team B |
+| „1"            | `1`                     | Team A einen Punkt abziehen |
+| „4"            | `4`                     | Team B einen Punkt abziehen |
 
-Funktioniert nur, solange kein Textfeld fokussiert ist und die Live-Ansicht
-aktiv ist.
+Jede Taste "gehört" also komplett ihrer Seite, analog zur
+Maus-Fernbedienung unten. Funktioniert nur, solange kein Textfeld
+fokussiert ist und die Live-Ansicht aktiv ist.
 
-Ein **seitenspezifisches Abziehen per Presenter-Taste** (analog zur
-Maus-Fernbedienung unten) wurde ausführlich mit zwei Geräten (Norwii N95
-Plus, Logitech R500s) durchprobiert — Halten einer Taste, Doppel-Druck,
-Tab-Kombi, Umbelegung auf eigene Tasten per Logi-Options+-Software — und
-letztlich als auf dem iPad nicht praktikabel verworfen: beide Geräte
-liefern dort beim Halten kein browserseitig sichtbares Signal. Für
-gezieltes Abziehen auf dem iPad stattdessen die **Maus-Fernbedienung**
-nutzen (funktioniert dort bereits zuverlässig) oder den **↶ Undo**-Button.
+Unabhängig vom Ring reagiert die App zusätzlich generisch auf jede
+angeschlossene Tastatur: `Rücktaste` = Undo (letzter Punkt, egal von wem),
+`Escape` = Match abbrechen (fragt wie gewohnt per Bestätigungsdialog
+nach), `S` = Match speichern (nur wenn der Speichern-Banner am Matchende
+sichtbar ist). `Enter` ist komplett deaktiviert, sonst aktivieren Browser
+beim Enter-Druck das zuletzt fokussierte Element neu (z.B. einen gerade
+angeklickten Score-Button) und geben so ungewollt einen zusätzlichen
+Punkt.
 
 ## Fernbedienung (Maus)
 
