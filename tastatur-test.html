@@ -17,12 +17,20 @@
   "Taste → Aktion" zu programmieren.
 
   Manche Geräte haben mehrere Modi, die unterschiedliche HID-Profile
-  sprechen (z.B. beim Fingerring WX02 beobachtet: "Music Mode" löst gar
-  kein keydown/keyup/wheel aus). Deshalb pollt diese Seite zusätzlich die
-  Gamepad API (analog zu gamepad-test.html) — manche Consumer-Control-/
-  Medien-Tasten melden sich dem Browser nicht als Tastatur-, sondern als
-  Gamepad-Button. Die Gamepad API kennt keine Tastendruck-Events, der
-  Zustand muss deshalb per requestAnimationFrame-Polling abgefragt werden.
+  sprechen (z.B. beim Fingerring WX02 beobachtet: "Music Mode" löst weder
+  keydown/keyup/wheel noch einen Gamepad-Button aus — Polling per Gamepad
+  API bleibt hier ebenfalls stumm). Deshalb pollt diese Seite zusätzlich
+  die Gamepad API (analog zu gamepad-test.html; kennt keine
+  Tastendruck-Events, der Zustand muss per requestAnimationFrame
+  abgefragt werden) UND registriert Media-Session-Action-Handler
+  (play/pause/previoustrack/nexttrack/seekbackward/seekforward/stop).
+  Grund: iPadOS routet Hardware-Medientasten (AVRCP-Bluetooth-Profil, wie
+  es "Music Mode"-Fernbedienungen typischerweise sprechen) nicht als
+  Tastatur- oder Gamepad-Event an die Seite, sondern ausschließlich an die
+  MediaSession API einer Seite mit aktiv abspielendem Audio/Video-Element
+  — dafür läuft im Hintergrund eine 0,1s-Stille-Schleife (WAV-Data-URI),
+  sobald der Start-Button unten angetippt wurde (Autoplay-Policy verlangt
+  eine Nutzer-Geste).
 -->
 <style>
   :root {
@@ -120,6 +128,16 @@
     color: var(--text);
     font-size: 0.85rem;
   }
+  button.start-audio {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+  button.start-audio.playing { border-color: var(--active); }
 </style>
 
 <h1>⌨️ Tastatur-Test</h1>
@@ -143,6 +161,17 @@
 </p>
 <div id="gpStatus" class="status">Kein Gamepad verbunden.</div>
 <div id="gpButtons" class="buttons-grid"></div>
+
+<h2>Media Session (Play/Pause/Track-Tasten)</h2>
+<p class="hint">
+  Für Geräte, die weder Tastatur- noch Gamepad-Events auslösen (z.B.
+  "Music Mode" beim Fingerring WX02): Button unten antippen, um eine
+  stille Audio-Schleife zu starten (nötig, damit iPadOS Hardware-
+  Medientasten überhaupt an diese Seite weiterleitet), dann am Gerät
+  Play/Pause/Weiter/Zurück drücken.
+</p>
+<button class="start-audio" id="startAudio">▶️ Audio starten</button>
+<div id="msStatus" class="status">Audio noch nicht gestartet.</div>
 
 <h2>Letztes Tastatur-Event</h2>
 <div class="last-grid">
@@ -263,4 +292,70 @@
   }
 
   requestAnimationFrame(pollGamepads);
+
+  // MediaSession API: iPadOS/Safari leitet Hardware-Medientasten (AVRCP-
+  // Bluetooth-Profil — das, was "Music Mode"-Fernbedienungen typischerweise
+  // sprechen) nur an eine Seite mit aktiv abspielendem Audio-/Video-Element
+  // weiter, nicht als generisches Tastatur- oder Gamepad-Event. Deshalb
+  // hier eine winzige, per Data-URI eingebettete Stille-Schleife (0,1s,
+  // 8kHz/8bit WAV) — Autoplay-Policy verlangt dafür eine Nutzer-Geste
+  // (Button-Tap).
+  const SILENT_WAV = 'data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+
+  const msStatusEl = document.getElementById('msStatus');
+  const startAudioBtn = document.getElementById('startAudio');
+  let silentAudio = null;
+
+  const MS_ACTIONS = ['play', 'pause', 'previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'stop'];
+
+  function setupMediaSessionHandlers() {
+    if (!('mediaSession' in navigator)) {
+      log('MediaSession API nicht verfügbar in diesem Browser.');
+      return;
+    }
+    MS_ACTIONS.forEach((action) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, () => {
+          log(`mediasession  action="${action}"`);
+        });
+      } catch (err) {
+        // Manche Browser kennen nicht jede Action (z.B. seekbackward) —
+        // einfach überspringen, kein Grund den Rest zu blockieren.
+      }
+    });
+  }
+
+  startAudioBtn.addEventListener('click', async () => {
+    if (silentAudio && !silentAudio.paused) {
+      silentAudio.pause();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      startAudioBtn.classList.remove('playing');
+      startAudioBtn.textContent = '▶️ Audio starten';
+      msStatusEl.className = 'status';
+      msStatusEl.textContent = 'Audio gestoppt.';
+      log('media session: Audio-Schleife gestoppt.');
+      return;
+    }
+
+    if (!silentAudio) {
+      silentAudio = new Audio(SILENT_WAV);
+      silentAudio.loop = true;
+      silentAudio.volume = 0; // doppelt abgesichert, WAV ist ohnehin stumm
+    }
+    try {
+      await silentAudio.play();
+      setupMediaSessionHandlers();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+      startAudioBtn.classList.add('playing');
+      startAudioBtn.textContent = '⏸️ Audio läuft (Tippen zum Stoppen)';
+      msStatusEl.className = 'status active';
+      msStatusEl.textContent = 'Audio läuft — jetzt am Gerät Play/Pause/Weiter/Zurück drücken.';
+      log('media session: stille Audio-Schleife gestartet, Action-Handler registriert.');
+    } catch (err) {
+      msStatusEl.textContent = `Audio-Start fehlgeschlagen: ${err.message}`;
+      log(`media session: Audio-Start fehlgeschlagen — ${err.message}`);
+    }
+  });
 </script>
