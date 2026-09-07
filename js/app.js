@@ -841,9 +841,38 @@ document.addEventListener('wheel', (e) => {
 // aktiviert Enter das zuletzt fokussierte Element neu — z.B. einen gerade
 // angeklickten Score-Button — und gibt so ungewollt einen zusätzlichen
 // Punkt.
+
+// Eingabegerät "Fingerring WX02" (Bluetooth, "Music Mode") — Tastencodes
+// per tastatur-test.html ermittelt. Der Ring hat zwei Wipp-Tasten
+// (Hoch/Runter), die je nach Gestenlänge unterschiedliche Media-Keys
+// senden (die Geste selbst wird vom Ring erkannt, nicht hier). Belegung
+// analog zum bestehenden Muster "Klick = Punkt, Halten = Abziehen" bei
+// Maus/Touch (siehe removeLastPointFromSide oben):
+// Hoch kurz antippen = Punkt A, Runter kurz antippen = Punkt B,
+// Hoch lang halten = Punkt A abziehen, Runter lang halten = Punkt B
+// abziehen. Play/Pause (3. Taste) und Doppelklick "Hoch" (BrowserHome)
+// bleiben bewusst unbelegt.
+function wx02KeyAction(key) {
+  switch (key) {
+    case 'MediaTrackNext': return () => scorePoint('A');
+    case 'MediaTrackPrevious': return () => scorePoint('B');
+    case 'AudioVolumeUp': return () => removeLastPointFromSide('A');
+    case 'AudioVolumeDown': return () => removeLastPointFromSide('B');
+    default: return null;
+  }
+}
+
 document.addEventListener('keydown', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  const wx02Action = wx02KeyAction(e.key);
+  if (wx02Action) {
+    e.preventDefault();
+    if (e.repeat) return;
+    wx02Action();
+    return;
+  }
 
   switch (e.key) {
     case 'Backspace':

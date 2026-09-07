@@ -81,6 +81,23 @@ Tastencodes zuerst per `tastatur-test.html` (Diagnose-Seite im
 Repo-Root, nicht Teil der eigentlichen App) ermittelt und dann als feste
 Zuordnung im `keydown`-Listener in `js/app.js` ergänzt werden.
 
+### Fingerring WX02 ("Music Mode")
+
+Im "Music Mode" sendet der Ring keine normalen Zeichen-Tasten, sondern
+Media-Keys (`event.key` z.B. `"MediaTrackNext"`), abhängig von Tastendruck
+**und** Gestenlänge — die Geste selbst erkennt der Ring, nicht die App:
+
+| Geste am Ring | gesendeter Tastencode | Aktion |
+| -------------- | ---------------------- | ------ |
+| „Hoch" kurz antippen | `MediaTrackNext` | Punkt für Team A |
+| „Runter" kurz antippen | `MediaTrackPrevious` | Punkt für Team B |
+| „Hoch" lang halten | `AudioVolumeUp` | Team A einen Punkt abziehen |
+| „Runter" lang halten | `AudioVolumeDown` | Team B einen Punkt abziehen |
+
+Play/Pause (3. Taste, `MediaPlayPause`) und Doppelklick "Hoch"
+(`BrowserHome`) bleiben unbelegt. Damit gilt für den Ring dasselbe Muster
+wie bei Maus/Finger: kurzer Druck zählt, langes Halten korrigiert.
+
 ## Fernbedienung (Maus)
 
 Während des Live-Scorings reagiert die App zusätzlich auf Mausklicks —
