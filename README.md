@@ -63,32 +63,23 @@ kann GitHub Pages ohne Build-Schritt direkt von `main` deployen.
 `server.js`/`src/`/`scripts/`/`data/` liegen daneben und sind rein optional
 für die lokale Entwicklung.
 
-## Fernbedienung (Stouchi CGC004)
+## Fernbedienung (Tastatur)
 
-Während des Live-Scorings reagiert die App auf Tastatur-Events des Stouchi
-CGC004 (Bluetooth-Ring mit 4 Tasten, meldet sich als normale Tastatur an).
-Tastencodes per `tastatur-test.html` (Diagnose-Seite im Repo-Root, nicht
-Teil der eigentlichen App) ermittelt:
+Während des Live-Scorings reagiert die App generisch auf jede
+angeschlossene Tastatur (auch eine per Bluetooth verbundene, z.B. ein
+Ring/Presenter, der sich als normale Tastatur anmeldet): `Rücktaste` =
+Undo (letzter Punkt, egal von wem), `Escape` = Match abbrechen (fragt wie
+gewohnt per Bestätigungsdialog nach), `S` = Match speichern (nur wenn der
+Speichern-Banner am Matchende sichtbar ist). `Enter` ist komplett
+deaktiviert, sonst aktivieren Browser beim Enter-Druck das zuletzt
+fokussierte Element neu (z.B. einen gerade angeklickten Score-Button) und
+geben so ungewollt einen zusätzlichen Punkt.
 
-| Taste am Ring | gesendeter Tastencode | Aktion |
-| -------------- | ---------------------- | ------ |
-| „2"            | `2`                     | Punkt für Team A |
-| „0" (4. Taste, physisch unbeschriftet) | Leertaste | Punkt für Team B |
-| „1"            | `1`                     | Team A einen Punkt abziehen |
-| „4"            | `4`                     | Team B einen Punkt abziehen |
-
-Jede Taste "gehört" also komplett ihrer Seite, analog zur
-Maus-Fernbedienung unten. Funktioniert nur, solange kein Textfeld
-fokussiert ist und die Live-Ansicht aktiv ist.
-
-Unabhängig vom Ring reagiert die App zusätzlich generisch auf jede
-angeschlossene Tastatur: `Rücktaste` = Undo (letzter Punkt, egal von wem),
-`Escape` = Match abbrechen (fragt wie gewohnt per Bestätigungsdialog
-nach), `S` = Match speichern (nur wenn der Speichern-Banner am Matchende
-sichtbar ist). `Enter` ist komplett deaktiviert, sonst aktivieren Browser
-beim Enter-Druck das zuletzt fokussierte Element neu (z.B. einen gerade
-angeklickten Score-Button) und geben so ungewollt einen zusätzlichen
-Punkt.
+Für eine seitenspezifische Belegung (ein Gerät mit mehreren Tasten, bei
+dem jede Taste fest einer Seite/Aktion zugeordnet werden soll) müssen die
+Tastencodes zuerst per `tastatur-test.html` (Diagnose-Seite im
+Repo-Root, nicht Teil der eigentlichen App) ermittelt und dann als feste
+Zuordnung im `keydown`-Listener in `js/app.js` ergänzt werden.
 
 ## Fernbedienung (Maus)
 

@@ -841,34 +841,9 @@ document.addEventListener('wheel', (e) => {
 // aktiviert Enter das zuletzt fokussierte Element neu — z.B. einen gerade
 // angeklickten Score-Button — und gibt so ungewollt einen zusätzlichen
 // Punkt.
-
-// Eingabegerät "Stouchi CGC004" (Bluetooth-Fernbedienung mit 4
-// Tasten) — Tastencodes per tastatur-test.html ermittelt: die 4 Tasten
-// senden die Ziffern 1/2/4 sowie (die vierte, physisch unbeschriftete
-// Taste) die Leertaste statt "0". Belegung wie gewünscht seitenspezifisch:
-// 2 = Punkt A, Leertaste = Punkt B, 1 = Punkt A abziehen, 4 = Punkt B
-// abziehen.
-function stouchiKeyAction(key) {
-  switch (key) {
-    case '2': return () => scorePoint('A');
-    case ' ': return () => scorePoint('B');
-    case '1': return () => removeLastPointFromSide('A');
-    case '4': return () => removeLastPointFromSide('B');
-    default: return null;
-  }
-}
-
 document.addEventListener('keydown', (e) => {
   if (!el.views.live.classList.contains('active')) return;
   if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-  const stouchiAction = stouchiKeyAction(e.key);
-  if (stouchiAction) {
-    e.preventDefault();
-    if (e.repeat) return;
-    stouchiAction();
-    return;
-  }
 
   switch (e.key) {
     case 'Backspace':
