@@ -14,8 +14,15 @@
   Taste/Geste am Gerät einmal auslösen und im Event-Log ablesen, welche(s)
   event.key / event.code / keyCode dabei feuert — das ist die Grundlage,
   um in js/app.js (siehe keydown-Listener dort) eine feste Zuordnung
-  "Taste → Aktion" zu programmieren, analog zu gamepad-test.html für
-  Bluetooth-Gamepads.
+  "Taste → Aktion" zu programmieren.
+
+  Manche Geräte haben mehrere Modi, die unterschiedliche HID-Profile
+  sprechen (z.B. beim Fingerring WX02 beobachtet: "Music Mode" löst gar
+  kein keydown/keyup/wheel aus). Deshalb pollt diese Seite zusätzlich die
+  Gamepad API (analog zu gamepad-test.html) — manche Consumer-Control-/
+  Medien-Tasten melden sich dem Browser nicht als Tastatur-, sondern als
+  Gamepad-Button. Die Gamepad API kennt keine Tastendruck-Events, der
+  Zustand muss deshalb per requestAnimationFrame-Polling abgefragt werden.
 -->
 <style>
   :root {
@@ -48,7 +55,29 @@
     font-size: 0.9rem;
   }
   .status.active { border-color: var(--active); }
+  .pad-id { color: var(--muted); word-break: break-all; }
   h2 { font-size: 1rem; margin: 20px 0 8px; }
+  .buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .btn-cell {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    transition: background 0.05s, border-color 0.05s;
+  }
+  .btn-cell.pressed {
+    background: var(--active);
+    border-color: var(--active);
+    color: #04150b;
+  }
+  .btn-cell .idx { font-weight: 700; font-size: 1.05rem; display: block; }
+  .btn-cell .val { font-size: 0.7rem; color: inherit; opacity: 0.8; display: block; }
   .last-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -105,7 +134,17 @@
 
 <div id="status" class="status">Noch kein Tastatur-Event empfangen — Seite fokussieren und Gerät bedienen.</div>
 
-<h2>Letztes Event</h2>
+<h2>Gamepad (Polling)</h2>
+<p class="hint">
+  Falls ein Modus des Geräts gar kein Tastatur-Event auslöst (z.B.
+  "Music Mode" beim Fingerring WX02): hier wird zusätzlich per Polling
+  geprüft, ob es sich stattdessen als Gamepad meldet. Erst irgendeine
+  Taste am Gerät drücken, damit iPadOS/Safari es überhaupt erkennt.
+</p>
+<div id="gpStatus" class="status">Kein Gamepad verbunden.</div>
+<div id="gpButtons" class="buttons-grid"></div>
+
+<h2>Letztes Tastatur-Event</h2>
 <div class="last-grid">
   <div class="last-cell"><span class="label">key</span><span class="value" id="lastKey">–</span></div>
   <div class="last-cell"><span class="label">code</span><span class="value" id="lastCode">–</span></div>
@@ -170,4 +209,58 @@
   window.addEventListener('wheel', (e) => {
     log(`wheel  deltaX=${e.deltaX.toFixed(1)}  deltaY=${e.deltaY.toFixed(1)}  deltaMode=${e.deltaMode}`);
   }, { passive: true });
+
+  // Gamepad API: kennt keine Tastendruck-Events, der Zustand muss per
+  // requestAnimationFrame-Polling abgefragt werden (siehe gamepad-test.html
+  // bzw. der Polling-Kommentar im keydown-Bereich von js/app.js).
+  const gpStatusEl = document.getElementById('gpStatus');
+  const gpButtonsEl = document.getElementById('gpButtons');
+  const gpLastPressed = {}; // key: `${padIndex}:${buttonIndex}` -> war zuletzt gedrückt?
+
+  window.addEventListener('gamepadconnected', (e) => {
+    log(`gamepad ${e.gamepad.index} verbunden: "${e.gamepad.id}" (mapping: "${e.gamepad.mapping || '(keins)'}")`);
+  });
+  window.addEventListener('gamepaddisconnected', (e) => {
+    log(`gamepad ${e.gamepad.index} getrennt.`);
+  });
+
+  function pollGamepads() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const connected = Array.from(pads).filter(Boolean);
+
+    if (connected.length === 0) {
+      gpStatusEl.className = 'status';
+      gpStatusEl.textContent = 'Kein Gamepad verbunden.';
+      gpButtonsEl.innerHTML = '';
+      requestAnimationFrame(pollGamepads);
+      return;
+    }
+
+    gpStatusEl.className = 'status active';
+    gpStatusEl.innerHTML = connected
+      .map((p) => `Gamepad ${p.index}: <strong>${p.id}</strong><br><span class="pad-id">mapping: "${p.mapping || '(keins)'}" · ${p.buttons.length} Buttons</span>`)
+      .join('<hr style="border-color: var(--border); margin: 8px 0;">');
+
+    gpButtonsEl.innerHTML = '';
+    connected.forEach((pad) => {
+      pad.buttons.forEach((btn, i) => {
+        const key = `${pad.index}:${i}`;
+        const isPressed = btn.pressed || btn.value > 0.5;
+        if (gpLastPressed[key] === undefined) gpLastPressed[key] = false;
+        if (isPressed !== gpLastPressed[key]) {
+          gpLastPressed[key] = isPressed;
+          log(`gamepad ${pad.index} · Button ${i} ${isPressed ? `gedrückt (Wert ${btn.value.toFixed(2)})` : 'losgelassen'}`, isPressed ? undefined : 'up');
+        }
+
+        const cell = document.createElement('div');
+        cell.className = 'btn-cell' + (isPressed ? ' pressed' : '');
+        cell.innerHTML = `<span class="idx">${i}</span><span class="val">${btn.value.toFixed(2)}</span>`;
+        gpButtonsEl.appendChild(cell);
+      });
+    });
+
+    requestAnimationFrame(pollGamepads);
+  }
+
+  requestAnimationFrame(pollGamepads);
 </script>
