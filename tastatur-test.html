@@ -313,6 +313,19 @@
       log('MediaSession API nicht verfügbar in diesem Browser.');
       return;
     }
+    // Ohne Metadata erkennt iPadOS diese Seite oft nicht zuverlässig als
+    // eigenständiges "Wird gerade wiedergegeben"-Ziel im Control Center —
+    // die Hardware-Medientasten routen dann stattdessen an die zuletzt
+    // aktive echte Musik-App (z.B. Musik/Apple Music), die dann hörbar
+    // reagiert, während hier nie ein Action-Handler feuert. Metadata
+    // setzen behebt genau das.
+    if ('MediaMetadata' in window) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Tastatur-Test (Stille)',
+        artist: 'BadmintonCounter',
+        album: 'Diagnose',
+      });
+    }
     MS_ACTIONS.forEach((action) => {
       try {
         navigator.mediaSession.setActionHandler(action, () => {
