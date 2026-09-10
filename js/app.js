@@ -614,6 +614,20 @@ el.setupForm.addEventListener('submit', (e) => {
 // Buttons (z.B. Finger auf einem Tablet) aber unverändert funktioniert.
 let lastPointerWasMouse = false;
 
+// Lokaler Entwicklungsmodus (nur wenn server.js unter localhost/127.0.0.1
+// läuft, siehe README/CLAUDE.md "Lokal testen") — NIE auf den echten
+// Geräten (iPad + Bluetooth-Gamepad als Maus-Fernbedienung), da dort
+// location.hostname immer die GitHub-Pages-Domain ist. Wird unten benutzt,
+// damit Undo/Match abbrechen/speichern/Seitenwechsel/Aufschläger-Wechsel
+// beim Testen mit einer echten Maus auf dem Entwicklungsrechner wieder
+// normal auf ihre Position reagieren, statt wie bei der echten
+// Maus-Fernbedienung ausnahmslos als Punkt gezählt zu werden (sonst ist
+// z.B. "Match abbrechen" nicht erreichbar und man kommt aus einem
+// Test-Match nicht mehr heraus). Die Punktezählung selbst (Klick auf
+// btnA/btnB bzw. überall sonst) bleibt bewusst unverändert
+// positionsunabhängig — auch im Entwicklungsmodus.
+const isLocalDevMode = ['localhost', '127.0.0.1'].includes(location.hostname);
+
 // iPadOS meldet eine echte angeschlossene Bluetooth-Maus/Trackpad in Safari
 // oft als pointerType "touch" statt "mouse" (WebKit tarnt externe Zeiger als
 // Touch, aus Kompatibilität mit touch-only Webseiten) — ein simples
@@ -642,11 +656,11 @@ el.btnB.addEventListener('click', () => {
 // per Maus (bei der Maus-Fernbedienung zählt ein Klick dort wie überall
 // sonst als Punkt, siehe isOtherControl unten).
 el.serveA.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   toggleServerPlayer('A');
 });
 el.serveB.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   toggleServerPlayer('B');
 });
 el.newSetPrompt.querySelectorAll('input[name="new-set-first-server"]').forEach((r) => {
@@ -684,23 +698,26 @@ el.btnNewSetConfirm.addEventListener('click', () => {
   renderLive();
 });
 el.btnSideSwitch.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   toggleSides();
 });
 // Undo/Abbrechen/Speichern per Maus lösen bewusst NICHT ihre Aktion aus,
 // sondern zählen wie jeder andere Mausklick nur einen Punkt (siehe
 // isOtherControl oben) — per Maus laufen diese drei stattdessen über die
 // Tastatur (Backspace/Escape/S, siehe der keydown-Listener weiter unten).
+// Ausnahme: isLocalDevMode (siehe oben) — dort sollen die Buttons beim
+// Testen mit einer echten Maus ganz normal klickbar sein, sonst ist z.B.
+// "Match abbrechen" aus einem Test-Match heraus nicht mehr erreichbar.
 el.btnUndo.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   undoPoint();
 });
 el.btnCancel.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   cancelMatch();
 });
 el.btnSave.addEventListener('click', () => {
-  if (lastPointerWasMouse) return;
+  if (lastPointerWasMouse && !isLocalDevMode) return;
   saveMatch();
 });
 
@@ -719,15 +736,24 @@ document.addEventListener('pointerdown', (e) => {
   lastPointerWasMouse = isPreciseMousePointer(e);
 }, true);
 
-// Bei der Maus-Fernbedienung soll ein Klick/Press AUSNAHMSLOS einen Punkt
-// geben, egal wo auf dem Bildschirm der Mauszeiger gerade steht (auch über
-// Undo, Match abbrechen/speichern, "Weiter" beim Satzwechsel, dem
-// Aufschlag-Badge, ...) — Finger-Taps auf diese Buttons funktionieren dabei
-// unverändert normal, da diese Prüfung nur den Maus-Zweig betrifft (siehe
-// isPreciseMousePointer oben) und die jeweiligen Klick-Handler selbst per
-// lastPointerWasMouse auf Maus verzichten.
-function isOtherControl() {
-  return false;
+// Bei der echten Maus-Fernbedienung (iPad + Bluetooth-Gamepad) soll ein
+// Klick/Press AUSNAHMSLOS einen Punkt geben, egal wo auf dem Bildschirm der
+// Mauszeiger gerade steht (auch über Undo, Match abbrechen/speichern,
+// "Weiter" beim Satzwechsel, dem Aufschlag-Badge, ...) — Finger-Taps auf
+// diese Buttons funktionieren dabei unverändert normal, da diese Prüfung
+// nur den Maus-Zweig betrifft (siehe isPreciseMousePointer oben) und die
+// jeweiligen Klick-Handler selbst per lastPointerWasMouse auf Maus
+// verzichten.
+//
+// Ausnahme isLocalDevMode (siehe oben): beim Testen mit einer echten Maus
+// auf dem Entwicklungsrechner sollen Undo/Match abbrechen/speichern/
+// Seitenwechsel/Aufschläger-Wechsel ganz normal als Button reagieren statt
+// als Punkt gezählt zu werden — sonst kommt man aus einem Test-Match nicht
+// mehr heraus. Auf den echten Geräten ist isLocalDevMode immer false, das
+// Verhalten dort bleibt unverändert.
+function isOtherControl(target) {
+  if (!isLocalDevMode) return false;
+  return !!target.closest('#btn-undo, #btn-cancel, #btn-save, #btn-side-switch, #serve-a, #serve-b');
 }
 
 const LONG_PRESS_MS = 500;
